@@ -1,60 +1,34 @@
-🏭 Management API - CIESA
+# 🏭 Management API - CIESA
 Sistema de gestión de base de datos para planta de producción, implementado con una arquitectura desacoplada que utiliza un API Gateway y un servicio de gestión monolítico con principios de arquitectura hexagonal.
 
-📋 Índice
-🏗️ Arquitectura
+## 📋 Índice
+🏗️ Arquitectura  
 
-🚀 Inicio Rápido
+🚀 Inicio Rápido  
 
-🗄️ Base de Datos
+🛠️ Desarrollo  
 
-🌱 Seeds y Datos Iniciales
+🐳 Docker  
 
-🛠️ Desarrollo
+📚 API  
 
-🐳 Docker
+🔧 Configuración Avanzada  
 
-📚 API
+📞 Soporte  
 
-🔧 Configuración Avanzada
+---
 
-📞 Soporte
-
-🏗️ Arquitectura
+## 🏗️ Arquitectura
 El proyecto utiliza un API Gateway como punto de entrada único que se comunica con un servicio de gestión (management_service) interno. Este servicio, a su vez, implementa arquitectura hexagonal (ports & adapters) para mantener una clara separación de la lógica de negocio.
 
-🔧 Servicios Desplegados
-Servicio
+### 🔧 Servicios Desplegados
+| Servicio            | Puerto Público | Puerto Interno | Responsabilidad                                        | Estado       |
+|---------------------|----------------|----------------|------------------------------------------------------|--------------|
+| api_gateway         | 8000           | 8000           | Punto de entrada único, enruta peticiones al servicio de gestión. | ✅ Productivo |
+| management_service  | N/A            | 8001           | Contiene toda la lógica de negocio (empleados, producción, etc). | ✅ Productivo |
 
-Puerto Público
-
-Puerto Interno
-
-Responsabilidad
-
-Estado
-
-api_gateway
-
-8000
-
-8000
-
-Punto de entrada único, enruta peticiones al servicio de gestión.
-
-✅ Productivo
-
-management_service
-
-N/A
-
-8001
-
-Contiene toda la lógica de negocio (empleados, producción, etc).
-
-✅ Productivo
-
-📊 Diagrama de Arquitectura
+### 📊 Diagrama de Arquitectura
+```mermaid
 graph TB
     subgraph "Cliente/Frontend"
         Client[Cliente Web/Mobile]
@@ -85,61 +59,45 @@ graph TB
     DC -.-> Gateway
     DC -.-> ManagementService
     DC -.-> DB
+```
 
-🚀 Inicio Rápido
-📋 Prerrequisitos
-Python 3.12+
+---
 
-Docker y Docker Compose
+## 🚀 Inicio Rápido
+### 📋 Prerrequisitos
+- Python 3.12+  
+- Docker y Docker Compose  
+- Git  
 
-Git
-
-⚡ Instalación
-Clonar el repositorio:
-
+### ⚡ Instalación
+Clonar el repositorio:  
+```bash
 git clone <url-repositorio>
 cd management-api
+```
 
-Configurar variables de entorno:
-Crea un archivo .env a partir de .env.example y ajústalo con la configuración de tu base de datos.
+Configurar variables de entorno:  
+Crea un archivo `.env` a partir de `.env.example` y ajústalo con la configuración de tu base de datos externa.
 
-Levantar los servicios con Docker:
-
+Levantar los servicios con Docker:  
+```bash
 docker-compose up -d --build
+```
 
-Inicializar base de datos (solo la primera vez):
-Espera a que el contenedor de la base de datos esté saludable y luego ejecuta:
+---
 
-docker-compose exec management_service python scripts/manage_database.py init
-
-🗄️ Base de Datos
-👉 Se utiliza SQL Server con Alembic para las migraciones. Todos los comandos de base de datos deben ejecutarse dentro del contenedor management_service.
-
-🛠️ Comandos Alembic
-# Crear una nueva migración
-docker-compose exec management_service python scripts/manage_database.py migrate -m "Mensaje del commit"
-
-# Aplicar migraciones
-docker-compose exec management_service python scripts/manage_database.py upgrade
-
-🌱 Seeds y Datos Iniciales
-👉 Los seeds inicializan datos maestros como categorías, plantas, turnos, etc.
-
-🚀 Ejecutar (dentro del contenedor)
-# Ejecutar todos los seeds
-docker-compose exec management_service python scripts/run_seeds.py
-
-# Ejecutar un seed específico
-docker-compose exec management_service python scripts/run_seeds.py --table empleados
-
-🛠️ Desarrollo
-Endpoint Health Check
+## 🛠️ Desarrollo
+### Endpoint Health Check
 Para verificar que el punto de entrada público está funcionando:
-
+```bash
 curl http://localhost:8000/health
+```
 
-🐳 Docker
-Comandos Principales
+---
+
+## 🐳 Docker
+### Comandos Principales
+```bash
 # Levantar servicios en segundo plano
 docker-compose up -d
 
@@ -148,21 +106,24 @@ docker-compose logs -f api_gateway
 
 # Detener y eliminar contenedores
 docker-compose down
+```
 
-📚 API
+---
+
+## 📚 API
 Una vez que los contenedores estén en ejecución, la documentación interactiva de la API estará disponible a través del API Gateway:
 
-Swagger UI: http://localhost:8000/docs
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)  
+- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)  
 
-ReDoc: http://localhost:8000/redoc
+---
 
-📞 Soporte
-Problemas Comunes
-Error de conexión a SQL Server: Verifica las variables en tu archivo .env.
+## 📞 Soporte
+### Problemas Comunes
+- **Error de conexión a SQL Server**: Verifica las variables en tu archivo `.env`.  
+- **Puerto 8000 ocupado**: Asegúrate de que ningún otro proceso esté usando el puerto del gateway.  
 
-Migraciones fallidas: Revisa los logs del contenedor management_service.
+---
 
-Puerto 8000 ocupado: Asegúrate de que ningún otro proceso esté usando el puerto del gateway.
-
-🏭 Desarrollado para CIESA - Sistema de administración de base de datos de Producción
-API Gateway · Servicio Monolítico · Arquitectura Hexagonal · Python · FastAPI · SQL Server · Docker
+🏭 Desarrollado para CIESA - Sistema de administración de base de datos de Producción  
+API Gateway · Servicio Monolítico · Arquitectura Hexagonal · Python · FastAPI · SQL Server · Docker  
