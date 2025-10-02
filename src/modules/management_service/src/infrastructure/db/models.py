@@ -12,10 +12,10 @@ from sqlalchemy import (
     Enum as SQLEnum
 )
 from sqlalchemy.orm import relationship
-from src.shared.database import _Base
+from src.shared.database import _BaseMain
 from src.modules.management_service.src.domain.entities import TipoMovimiento
 
-class WorkerMovementORM(_Base):
+class WorkerMovementORM(_BaseMain):
     __tablename__ = "fm_movimientos_operarios"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

@@ -34,13 +34,24 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_DRIVER: str
     DB_TRUST_CERTIFICATE: str
-
-    # Permitir que el usuario pase directamente la URL completa
     DATABASE_URL: Optional[str] = None
+
+    # --- DB de Autenticación y Logs ---
+    AUTH_DB_HOST: str
+    AUTH_DB_PORT: int
+    AUTH_DB_NAME: str
+    AUTH_DB_USER: str
+    AUTH_DB_PASSWORD: str
+    AUTH_DB_DRIVER: str
+    AUTH_DB_TRUST_CERTIFICATE: str 
+    AUTH_DATABASE_URL: Optional[str] = None
 
     # Servicios
     MANAGEMENT_SERVICE_HOST: str = "localhost"
     MANAGEMENT_SERVICE_PORT: int = 8001
+    AUTH_SERVICE_HOST: str = "localhost"
+    AUTH_SERVICE_PORT: int = 8002
+
 
     # Gateway
     GATEWAY_HOST: str = "localhost"
@@ -69,10 +80,24 @@ class Settings(BaseSettings):
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
             f"?driver={self.DB_DRIVER}&TrustServerCertificate={self.DB_TRUST_CERTIFICATE}"
         )
+    @property
+    def auth_database_url(self) -> str:
+        """URL para la base de datos de autenticación."""
+        if self.AUTH_DATABASE_URL:
+            return self.AUTH_DATABASE_URL
+        return (
+            f"mssql+pyodbc://{self.AUTH_DB_USER}:{self.AUTH_DB_PASSWORD}"
+            f"@{self.AUTH_DB_HOST}:{self.AUTH_DB_PORT}/{self.AUTH_DB_NAME}"
+            f"?driver={self.AUTH_DB_DRIVER}&TrustServerCertificate={self.AUTH_DB_TRUST_CERTIFICATE}"
+        )
 
     @property
-    def empleados_service_url(self) -> str:
+    def management_service_url(self) -> str:
         return f"http://{self.MANAGEMENT_SERVICE_HOST}:{self.MANAGEMENT_SERVICE_PORT}"
+    @property
+    def auth_service_url(self) -> str:
+        return f"http://{self.AUTH_SERVICE_HOST}:{self.AUTH_SERVICE_PORT}"
+
 
     @property
     def cors_methods_list(self) -> list[str]:

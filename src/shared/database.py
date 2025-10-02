@@ -5,19 +5,15 @@ from sqlalchemy.sql import func
 from .config import settings
 
 # Configuración específica para SQL Server
-engine = create_engine(
-    settings.database_url,
-    echo=settings.DEBUG,
-    # Configuraciones específicas para SQL Server
-    pool_pre_ping=True,
-    pool_recycle=300,
-    connect_args={
-        "timeout": 30,
-        "autocommit": False,
-    },
-)
+engine_main = create_engine(settings.database_url, pool_pre_ping=True)
+SessionLocalMain = sessionmaker(autocommit=False, autoflush=False, bind=engine_main)
+BaseMain = declarative_base()
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# --- Conexión a la Base de Datos de Autenticación (NUEVO) ---
+engine_auth = create_engine(settings.auth_database_url, pool_pre_ping=True)
+SessionLocalAuth = sessionmaker(autocommit=False, autoflush=False, bind=engine_auth)
+BaseAuth = declarative_base()
 
 # Clase base declarativa
-_Base = declarative_base()
+_BaseMain = BaseMain
+_BaseAuth = BaseAuth
