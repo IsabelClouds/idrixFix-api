@@ -11,6 +11,15 @@ from datetime import datetime
 from src.modules.management_service.src.infrastructure.api.routers.movimientos_empleado import (
     router as router_movimientos,
 )
+from src.modules.auth_service.src.infrastructure.api.routers.auth import (
+    router as auth_router,
+)
+from src.modules.auth_service.src.infrastructure.api.routers.usuarios import (
+    router as usuarios_router,
+)
+from src.modules.auth_service.src.infrastructure.api.routers.roles import (
+    router as roles_router,
+)
 app = FastAPI(
     title="Administracion API Gateway -- CIESA",
     description="API Gateway que expone todos los servicios de manera unificada (modo monolítico para compatibilidad)",
@@ -35,7 +44,10 @@ async def domain_exception_handler_app(request: Request, exc: DomainError):
 
 
 # Servicio de empleados
-app.include_router(router_movimientos, prefix="/api/movimientos/empleados", tags=["movimientos_empleado"])
+app.include_router(router_movimientos, prefix="/api/movimientos/empleados", tags=["Movimientos empleados"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Autenticación"])
+app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
+app.include_router(roles_router, prefix="/api/roles", tags=["Roles"])
 
 @app.get("/health")
 async def health_check():
