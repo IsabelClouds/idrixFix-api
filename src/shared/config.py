@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     CORS_ALLOW_METHODS: str = "*"
     CORS_ALLOW_HEADERS: str = "*"
 
+    # JWT Configuration
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRATION_MINUTES: int
+
     @property
     def database_url(self) -> str:
         """Si existe DATABASE_URL (env), úsala; si no, constrúyela."""

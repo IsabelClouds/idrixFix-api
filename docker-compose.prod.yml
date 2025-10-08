@@ -40,6 +40,9 @@ services:
       DATABASE_URL: mssql+pyodbc://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${AUTH_DB_NAME}?driver=${AUTH_DB_DRIVER}&TrustServerCertificate=${AUTH_DB_TRUST_CERTIFICATE}
       AUTH_SERVICE_HOST: 0.0.0.0
       AUTH_SERVICE_PORT: 8002
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES}
       PYTHONPATH: /app
     networks:
       - management_network
