@@ -10,38 +10,30 @@ from alembic import context
 # Agrega la raíz del proyecto al path para encontrar los módulos
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Importa tu configuración centralizada y la Base declarativa
+# Importa configuración centralizada
 from src.shared.config import settings
-from src.shared.database import Base
+# Usar _BaseAuth como la base declarativa a migrar
+from src.shared.database import _BaseAuth as target_base 
 
-from src.modules.management_service.db.models import (
-    WorkerMovementORM
-)
+# Importar models.py para registrar todos los modelos en sus bases
+# Esto asegura que los modelos de Auth se registren en _BaseAuth
+import src.shared.models
 
 # Configura la URL de la base de datos desde tu archivo de configuración central
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Usar la URL de la base de datos de AUTENTICACIÓN
+config.set_main_option("sqlalchemy.url", settings.auth_database_url)
 
 # Interpreta el archivo de configuración para el logging de Python.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# El `target_metadata` apunta a la Base de tus modelos para la autogeneración de migraciones
-target_metadata = Base.metadata
+# El `target_metadata` apunta a la metadata de la base de AUTH para la autogeneración
+target_metadata = target_base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
+    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -55,12 +47,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
+    """Run migrations in 'online' mode."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
