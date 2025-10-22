@@ -103,3 +103,13 @@ class LineaAsignadaResponse(LineaAsignadaBase):
 
     class Config:
         from_attributes = True
+
+class LineaExternaResponse(BaseModel):
+    """Schema para la respuesta de una Línea Externa (de la DB principal)"""
+    id_linea: int
+    nombre: str
+    estado: str
+    id_planta: Optional[int] = None
+
+    class Config:
+        from_attributes = True

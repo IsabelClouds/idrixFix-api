@@ -9,7 +9,8 @@ from src.modules.auth_service.src.infrastructure.db.repositories.linea_asignada_
 # Repo externo
 from src.modules.auth_service.src.infrastructure.db.repositories.linea_externa_repository import LineaExternaRepository
 from src.modules.auth_service.src.application.use_cases.linea_asignada_use_case import LineaAsignadaUseCase
-from src.modules.auth_service.src.infrastructure.api.schemas.usuarios import LineaAsignadaCreate, LineaAsignadaResponse
+from src.modules.auth_service.src.application.use_cases.linea_externa_use_case import LineaExternaUseCase
+from src.modules.auth_service.src.infrastructure.api.schemas.usuarios import LineaAsignadaCreate, LineaAsignadaResponse, LineaExternaResponse
 
 router = APIRouter(
     prefix="/usuarios/{id_usuario}/lineas",
@@ -65,4 +66,38 @@ def remover_linea_de_usuario(
     return success_response(
         data={"id_usuario": id_usuario, "id_linea_externa_removida": id_linea_externa},
         message="Asignación de línea removida"
+    )
+
+def get_linea_externa_use_case(
+    db_externa: Session = Depends(get_db) # <-- Inyecta la DB externa
+) -> LineaExternaUseCase:
+    """Dependency para obtener el caso de uso de líneas externas"""
+    return LineaExternaUseCase(
+        linea_externa_repository=LineaExternaRepository(db_externa)
+    )
+
+@router.get(
+    "/lineas/", 
+    response_model=List[LineaExternaResponse], 
+    status_code=status.HTTP_200_OK
+)
+def get_all_active_lines(
+    use_case: LineaExternaUseCase = Depends(get_linea_externa_use_case)
+):
+    """
+    Obtiene una lista de todas las líneas de trabajo externas
+    que se encuentran activas.
+    """
+    # El caso de uso devuelve entidades de dominio
+    lineas_entities = use_case.get_all_active_lines()
+    
+    # Mapeamos las entidades a los Schemas de Respuesta Pydantic
+    response_data = [
+        LineaExternaResponse.model_validate(linea).model_dump() 
+        for linea in lineas_entities
+    ]
+    
+    return success_response(
+        data=response_data,
+        message="Líneas activas obtenidas"
     )

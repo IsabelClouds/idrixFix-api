@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -60,3 +60,28 @@ class LineaExternaRepository(ILineaExternaRepository):
             return linea_encontrada is not None
         except SQLAlchemyError as e:
             raise RepositoryError(f"Error al verificar línea externa con id={id_linea}") from e
+    def get_all_active(self) -> List[LineaExterna]:
+        """
+        Obtiene todas las líneas de trabajo externas que están activas,
+        ordenadas por nombre.
+        """
+        try:
+            lineas_orm = (
+                self.db.query(LineaORM)
+                .filter(LineaORM.LINE_ESTADO == "ACTIVO")
+                .order_by(LineaORM.LINE_NOMBRE.asc())
+                .all()
+            )
+            
+            # Mapear de ORM a Entidades de Dominio
+            return [
+                LineaExterna(
+                    id_linea=linea.LINE_ID,
+                    nombre=linea.LINE_NOMBRE,
+                    estado=linea.LINE_ESTADO,
+                    id_planta=linea.LINE_PLANTA
+                )
+                for linea in lineas_orm
+            ]
+        except SQLAlchemyError as e:
+            raise RepositoryError("Error al obtener todas las líneas activas.") from e
