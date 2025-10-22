@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
-from src.shared.database import _BaseAuth
+from src.shared.database import _BaseAuth, _BaseMain
 from src.modules.auth_service.src.domain.entities import ModuloEnum, PermisoEnum
 import enum
 import datetime
@@ -67,6 +67,12 @@ class Usuario(_BaseAuth):
                 })
         
         return modulos
+    @hybrid_property
+    def ids_lineas_externas(self):
+        """Obtiene solo los IDs de las líneas externas asignadas"""
+        if not self.lineas_asignadas:
+            return []
+        return [linea.id_linea_externa for linea in self.lineas_asignadas]
 
 
 class Rol(_BaseAuth):
@@ -161,3 +167,30 @@ class UsuarioLineaAsignada(_BaseAuth):
     __table_args__ = (
         UniqueConstraint("id_usuario", "id_linea_externa", name="uq_usuario_linea_externa"),
     )
+
+
+## LINEAS 
+class LineaORM(_BaseMain):
+    __tablename__ = "fm_lineas_operarios"
+
+    LINE_ID = Column(Integer,primary_key=True,autoincrement=True)
+    LINE_NOMBRE = Column(String(100),nullable=False)
+    LINE_ESTADO = Column(String(20),default='ACTIVO')
+    
+    LINE_FECCRE = Column(DateTime,default=datetime.datetime.now)
+    LINE_FECMOD = Column(DateTime,nullable=True)
+    
+    LINE_PLANTA = Column(Integer,ForeignKey("dbo.fm_planta_operarios.PLAN_ID"))
+    planta = relationship("PlantaORM", back_populates="lineas")
+
+
+class PlantaORM(_BaseMain):
+    __tablename__ = "fm_planta_operarios"
+
+    PLAN_ID = Column(Integer,primary_key=True,autoincrement=True)
+    PLAN_NOMBRE = Column(String(100),nullable=False)
+    PLAN_ESTADO = Column(String(20),default='ACTIVO')
+    PLAN_FECCRE = Column(DateTime,default=datetime.datetime.now)
+    PLAN_FECMOD = Column(DateTime,nullable=True)
+
+    lineas = relationship("LineaORM", back_populates="planta")

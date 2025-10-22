@@ -13,6 +13,9 @@ from src.modules.auth_service.src.infrastructure.api.routers.usuarios import (
 from src.modules.auth_service.src.infrastructure.api.routers.roles import (
     router as roles_router,
 )
+from src.modules.auth_service.src.infrastructure.api.routers.lineas_asignadas_router import (
+    router as lineas_asignadas_router,
+)
 from src.shared.common.exception_handlers import domain_exception_handler
 from src.shared.exceptions import DomainError
 
@@ -43,6 +46,7 @@ register_auth_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/auth", tags=["Autenticación"])
 app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
 app.include_router(roles_router, prefix="/api/roles", tags=["Roles"])
+app.include_router(lineas_asignadas_router, prefix="/api/lineas-asignadas", tags=["Lineas Asignadas"])
 
 
 @app.get("/health")

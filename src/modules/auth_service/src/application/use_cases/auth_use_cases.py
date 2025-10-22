@@ -44,19 +44,24 @@ class AuthUseCase:
             if not rol or not rol.is_active:
                 raise NotFoundError("Rol inválido o inactivo.")
 
-            # Generar token JWT primero sin session_id
+            # Extraer los IDs de las líneas asignadas desde el objeto usuario
+            lineas_permitidas = [
+                asignacion.id_linea_externa 
+                for asignacion in usuario.lineas_asignadas or []
+            ]
+
             token = Token.generate(
                 payload={
                     "sub": str(usuario.id_usuario),  # Subject (user ID) - estándar JWT
                     "username": usuario.username,
-                    "user_id": usuario.id_usuario,  # Mantener para compatibilidad
+                    "user_id": usuario.id_usuario, 
                 }
             )
             
             # Crear sesión con el token JWT
             sesion_data = SesionCreate(
                 id_usuario=usuario.id_usuario,
-                token=token.value,
+                token=token.value, 
                 fecha_inicio=datetime.now(),
                 fecha_expiracion=token.expires_at,
                 ip_address=ip_address,
@@ -64,19 +69,20 @@ class AuthUseCase:
             )
             sesion = self.sesion_repository.create(sesion_data)
             
-            # Regenerar token con session_id incluido
+            # Regenerar token con session_id Y las líneas
             token_with_session = Token.generate(
                 payload={
                     "sub": str(usuario.id_usuario),  # Subject (user ID) - estándar JWT
                     "username": usuario.username,
                     "user_id": usuario.id_usuario,  # Mantener para compatibilidad
-                    "session_id": sesion.id_sesion
+                    "session_id": sesion.id_sesion,
+                    "lineas": lineas_permitidas
                 }
             )
             
             # Actualizar sesión con el token final
             self.sesion_repository.update(sesion.id_sesion, {"token": token_with_session.value})
-            token = token_with_session
+            token = token_with_session # Usar el token final para la respuesta
 
             # Actualizar último login
             self.usuario_repository.update_last_login(usuario.id_usuario)
@@ -101,7 +107,8 @@ class AuthUseCase:
                 username=usuario.username,
                 rol_nombre=rol.nombre,
                 modulos=modulos,
-                token=token
+                token=token,
+                lineas_asignadas=lineas_permitidas # Ahora 'lineas_permitidas' SÍ existe
             )
 
             return user_session.to_response_dict()
@@ -125,7 +132,6 @@ class AuthUseCase:
             self.sesion_repository.soft_delete(sesion.id_sesion)
             return None
 
-        # Obtener usuario y rol
         usuario = self.usuario_repository.get_by_id(sesion.id_usuario)
         if not usuario or not usuario.is_active:
             return None
@@ -133,6 +139,11 @@ class AuthUseCase:
         rol = self.rol_repository.get_with_permisos(usuario.id_rol)
         if not rol or not rol.is_active:
             return None
+            
+        lineas_permitidas = [
+            asignacion.id_linea_externa 
+            for asignacion in usuario.lineas_asignadas or []
+        ]
 
         # Construir información del usuario
         modulos = []
@@ -162,7 +173,8 @@ class AuthUseCase:
                 "id": rol.id_rol,
                 "nombre": rol.nombre,
                 "modulos": modulos
-            }
+            },
+            "lineas": lineas_permitidas 
         }
 
     def refresh_token(self, token: str) -> Optional[Dict[str, Any]]:
@@ -177,9 +189,10 @@ class AuthUseCase:
         # Crear nueva sesión
         new_token = Token.generate(
             payload={
-                "sub": str(user_info["user_id"]),  # Subject (user ID) - estándar JWT
+                "sub": str(user_info["user_id"]),  
                 "username": user_info["username"],
-                "user_id": user_info["user_id"]  # Mantener para compatibilidad
+                "user_id": user_info["user_id"],  
+                "lineas": user_info.get("lineas", [])
             }
         )
 
@@ -189,8 +202,22 @@ class AuthUseCase:
             fecha_inicio=datetime.now(),
             fecha_expiracion=new_token.expires_at
         )
+        
+        # Guardar la nueva sesión
+        new_sesion = self.sesion_repository.create(sesion_data)
+        
+        token_with_session = Token.generate(
+             payload={
+                "sub": str(user_info["user_id"]),
+                "username": user_info["username"],
+                "user_id": user_info["user_id"],
+                "lineas": user_info.get("lineas", []),
+                "session_id": new_sesion.id_sesion 
+            }
+        )
 
-        self.sesion_repository.create(sesion_data)
+        self.sesion_repository.update(new_sesion.id_sesion, {"token": token_with_session.value})
+        new_token = token_with_session 
 
         return {
             "token": new_token.value,
@@ -205,4 +232,3 @@ class AuthUseCase:
     def cleanup_expired_sessions(self) -> int:
         """Limpia sesiones expiradas"""
         return self.sesion_repository.cleanup_expired_sessions()
-

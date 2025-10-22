@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError
 from datetime import datetime
 
+from src.modules.auth_service.src.infrastructure.db.models import Usuario, Rol, UsuarioLineaAsignada
 from src.modules.auth_service.src.application.ports.usuarios import IUsuarioRepository
 from src.modules.auth_service.src.infrastructure.api.schemas.usuarios import UsuarioCreate, UsuarioUpdate
 from src.modules.auth_service.src.infrastructure.db.models import Usuario, Rol
@@ -19,7 +20,8 @@ class UsuarioRepository(IUsuarioRepository):
             return (
                 self.db.query(Usuario)
                 .options(
-                    joinedload(Usuario.rol).joinedload(Rol.permisos_modulo)
+                    joinedload(Usuario.rol).joinedload(Rol.permisos_modulo),
+                    joinedload(Usuario.lineas_asignadas)
                 )
                 .filter(Usuario.is_active == True)
                 .all()
@@ -32,7 +34,8 @@ class UsuarioRepository(IUsuarioRepository):
             usuario = (
                 self.db.query(Usuario)
                 .options(
-                    joinedload(Usuario.rol).joinedload(Rol.permisos_modulo)
+                    joinedload(Usuario.rol).joinedload(Rol.permisos_modulo),
+                    joinedload(Usuario.lineas_asignadas)
                 )
                 .filter(Usuario.id_usuario == usuario_id, Usuario.is_active == True)
                 .first()
@@ -48,7 +51,8 @@ class UsuarioRepository(IUsuarioRepository):
             return (
                 self.db.query(Usuario)
                 .options(
-                    joinedload(Usuario.rol).joinedload(Rol.permisos_modulo)
+                    joinedload(Usuario.rol).joinedload(Rol.permisos_modulo),
+                    joinedload(Usuario.lineas_asignadas)
                 )
                 .filter(Usuario.username == username, Usuario.is_active == True)
                 .first()

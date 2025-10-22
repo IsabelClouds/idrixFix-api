@@ -20,6 +20,9 @@ from src.modules.auth_service.src.infrastructure.api.routers.usuarios import (
 from src.modules.auth_service.src.infrastructure.api.routers.roles import (
     router as roles_router,
 )
+from src.modules.auth_service.src.infrastructure.api.routers.lineas_asignadas_router import (
+    router as lineas_asignadas_router,
+)
 app = FastAPI(
     title="Administracion API Gateway -- CIESA",
     description="API Gateway que expone todos los servicios de manera unificada (modo monolítico para compatibilidad)",
@@ -48,6 +51,7 @@ app.include_router(router_movimientos, prefix="/api/movimientos/empleados", tags
 app.include_router(auth_router, prefix="/api/auth", tags=["Autenticación"])
 app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
 app.include_router(roles_router, prefix="/api/roles", tags=["Roles"])
+app.include_router(lineas_asignadas_router, prefix="/api/lineas-asignadas", tags=["Lineas Asignadas"])
 
 @app.get("/health")
 async def health_check():

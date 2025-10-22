@@ -31,6 +31,18 @@ class Usuario:
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     rol: Optional["Rol"] = None
+    def __post_init__(self):
+        """Inicializa listas vacías si son None"""
+        if self.rol and self.rol.permisos_modulo is None:
+             self.rol.permisos_modulo = []
+        if self.lineas_asignadas is None: 
+            self.lineas_asignadas = []
+    
+    def asignar_linea(self, linea: "UsuarioLineaAsignada") -> None:
+        """Asigna una línea al usuario"""
+        if self.lineas_asignadas is None:
+            self.lineas_asignadas = []
+        self.lineas_asignadas.append(linea)
 
     def desactivar(self) -> None:
         """Desactiva el usuario"""
@@ -216,3 +228,21 @@ class UsuarioLineaAsignada:
     id_linea_externa: int = 0  # O str, si el ID externo es un string
     created_at: Optional[datetime] = None
     usuario: Optional["Usuario"] = None
+    def validar_datos_basicos(self) -> bool:
+        """Valida que los datos básicos sean correctos"""
+        return self.id_usuario > 0 and self.id_linea_externa > 0
+
+@dataclass
+class LineaExterna:
+    """
+    Entidad de dominio que representa una Línea de Trabajo
+    de la base de datos externa (principal).
+    """
+    id_linea: int
+    nombre: str
+    estado: str
+    id_planta: Optional[int] = None
+
+    def esta_activa(self) -> bool:
+        """Verifica si la línea está activa"""
+        return self.estado == "ACTIVO"

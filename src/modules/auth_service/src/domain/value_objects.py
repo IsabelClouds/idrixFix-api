@@ -167,6 +167,7 @@ class UserSession:
     rol_nombre: str
     modulos: List[ModuloInfo]
     token: Token
+    lineas_asignadas: List[int]
 
     def __post_init__(self):
         if self.user_id <= 0:
@@ -174,6 +175,8 @@ class UserSession:
         
         if not self.username or not self.rol_nombre:
             raise ValueError("Username y rol son requeridos")
+        if not isinstance(self.lineas_asignadas, list):
+            raise ValueError("Líneas asignadas debe ser una lista")
 
     def to_response_dict(self) -> dict:
         """Convierte a diccionario para respuesta de login"""
@@ -185,7 +188,8 @@ class UserSession:
             "rol": {
                 "nombre": self.rol_nombre,
                 "modulos": [modulo.to_dict() for modulo in self.modulos]
-            }
+            },
+            "lineas_permitidas": self.lineas_asignadas
         }
 
     def is_session_valid(self) -> bool:

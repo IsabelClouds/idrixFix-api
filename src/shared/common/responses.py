@@ -2,6 +2,7 @@ from fastapi import status
 from fastapi.responses import JSONResponse
 from typing import List, Dict, Any
 from decimal import Decimal
+from datetime import datetime, date
 
 
 def convert_decimals(obj):
@@ -14,13 +15,31 @@ def convert_decimals(obj):
     else:
         return obj
 
+def convert_non_serializable(obj):
+    """
+    Convierte tipos no JSON serializables a tipos serializables.
+    """
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {k: convert_non_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_non_serializable(item) for item in obj]
+    elif hasattr(obj, '__dict__'):
+        # Para objetos que se pueden convertir a dict
+        return convert_non_serializable(obj.__dict__)
+    else:
+        return obj
+
 
 def success_response(data: Any, message: str, status_code: int = 200) -> JSONResponse:
     """
     Genera una respuesta JSON exitosa.
     """
     # Convierte todos los Decimal a float antes de serializar
-    cleaned_data = convert_decimals(data)
+    cleaned_data = convert_non_serializable(data)
 
     return JSONResponse(
         status_code=status_code,

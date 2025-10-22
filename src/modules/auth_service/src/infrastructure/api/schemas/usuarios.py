@@ -52,6 +52,7 @@ class UsuarioResponse(UsuarioBase):
     updated_at: datetime
     rol: Optional[RolResponse] = None
     permisos_modulos: List[Dict[str, Any]] = []
+    lineas_asignadas: List[LineaAsignadaResponse] = []
 
     class Config:
         from_attributes = True
@@ -81,6 +82,24 @@ class UsuarioResponse(UsuarioBase):
                         "nombre": "INVENTARIO",
                         "permisos": ["read"]
                     }
+                ],
+                "lineas_asignadas": [
+                    {"id_usuario_linea": 1, "id_usuario": 1, "id_linea_externa": 101, "created_at": "2024-01-01T08:00:00"},
+                    {"id_usuario_linea": 2, "id_usuario": 1, "id_linea_externa": 105, "created_at": "2024-01-01T08:00:00"}
                 ]
             }
         }
+
+class LineaAsignadaBase(BaseModel):
+    id_linea_externa: int = Field(..., gt=0, description="ID de la línea en la DB externa")
+
+class LineaAsignadaCreate(LineaAsignadaBase):
+    pass
+
+class LineaAsignadaResponse(LineaAsignadaBase):
+    id_usuario_linea: int
+    id_usuario: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
