@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict, Any
 from src.shared.base import get_db
 from math import ceil
 from src.shared.common.responses import success_response, error_response
 from src.shared.exceptions import RepositoryError, NotFoundError
+from src.shared.security import get_current_user_data
 # Importar el repositorio y casos de uso del movimiento
 from src.modules.management_service.src.infrastructure.db.repositories.movimientos_operario import (
     WorkerMovementRepository, RefMotivoRepository, RefDestinoMotivoRepository
@@ -127,9 +128,14 @@ def delete_movement_controller(
 def get_total_movements_by_filters(
     filters: WorkerMovementFilters,
     use_cases: WorkerMovementUseCases = Depends(get_movement_use_cases),
+    user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
     try:
-        total_records = use_cases.count_movements_by_filters(filters)
+        allowed_lines_ids = user_data.get("lineas", [])
+        total_records = use_cases.count_movements_by_filters(
+            filters=filters, 
+            allowed_lines=allowed_lines_ids
+        )
         return success_response(
             data=total_records,
             message="Total de movimientos obtenido",
@@ -146,9 +152,14 @@ def get_total_movements_by_filters(
 def get_movements_paginated(
     pagination_params: WorkerMovementPagination,
     use_cases: WorkerMovementUseCases = Depends(get_movement_use_cases),
+    user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
     try:
-        pagination_result = use_cases.get_movements_paginated_by_filters(pagination_params)
+        allowed_lines_ids = user_data.get("lineas", [])
+        pagination_result = use_cases.get_movements_paginated_by_filters(
+            filters=pagination_params,
+            allowed_lines=allowed_lines_ids
+        )
         
         # Mapeamos las entidades de dominio ('data') a los schemas de respuesta
         response_data = [

@@ -1,4 +1,4 @@
-# repositories.py (Añadir las siguientes importaciones y la clase)
+# repositories.py
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import func, and_
@@ -40,6 +40,8 @@ class WorkerMovementRepository(IWorkerMovementRepository):
         )
 
     def get_by_id(self, movement_id: int) -> Optional[WorkerMovement]:
+        # ESTA CONSULTA NO ESTÁ RESTRINGIDA POR LÍNEAS.
+        # Si se requiere, se debe pasar 'allowed_lines' aquí también.
         try:
             movement_orm = (
                 self.db.query(WorkerMovementORM)
@@ -53,6 +55,8 @@ class WorkerMovementRepository(IWorkerMovementRepository):
             raise RepositoryError("Error al consultar el movimiento.") from e
 
     def get_all_by_date(self, start_date: date, end_date: date) -> List[WorkerMovement]:
+        # ESTA CONSULTA NO ESTÁ RESTRINGIDA POR LÍNEAS.
+        # Si se requiere, se debe pasar 'allowed_lines' aquí también.
         try:
             orm_list = (
                 self.db.query(WorkerMovementORM)
@@ -113,9 +117,20 @@ class WorkerMovementRepository(IWorkerMovementRepository):
         except SQLAlchemyError as e:
             self.db.rollback()
             raise RepositoryError("No se pudo eliminar el movimiento.") from e
-    def _apply_filters(self, query, filters: WorkerMovementFilters):
-        """Función auxiliar para aplicar filtros comunes a consultas de conteo y selección."""
+
+    # +++ INICIO DE CAMBIOS +++
+
+    def _apply_filters(
+        self, query, filters: WorkerMovementFilters, allowed_lines: List[str]
+    ):
+        """Función auxiliar para aplicar filtros, incluyendo el filtro de seguridad de líneas."""
         conditions = []
+        
+        # 1. FILTRO DE SEGURIDAD OBLIGATORIO
+        # El usuario solo puede consultar las líneas que tiene asignadas.
+        conditions.append(WorkerMovementORM.linea.in_(allowed_lines))
+
+        # 2. FILTROS OPCIONALES DEL USUARIO
         
         # Filtro por rango de fecha_p
         if filters.fecha_inicial and filters.fecha_final:
@@ -129,38 +144,49 @@ class WorkerMovementRepository(IWorkerMovementRepository):
                 WorkerMovementORM.codigo_operario == filters.codigo_operario
             )
         
+        # Filtro opcional por línea (permite al usuario sub-filtrar dentro de sus líneas permitidas)
+        if filters.linea:
+             conditions.append(
+                WorkerMovementORM.linea == filters.linea
+            )
+            
+        # (Añadir aquí más filtros si 'filters' los tuviera, ej: tipo_movimiento)
+        
         if conditions:
             query = query.filter(and_(*conditions))
             
         return query
 
-    def count_by_filters(self, filters: WorkerMovementFilters) -> int:
+    def count_by_filters(self, filters: WorkerMovementFilters, allowed_lines: List[str]) -> int:
+        """Cuenta movimientos aplicando filtros de seguridad y de usuario."""
         try:
-            query = self.db.query(WorkerMovementORM)
-            query = self._apply_filters(query, filters)
+            # Query base para contar (más eficiente que query(WorkerMovementORM))
+            query = self.db.query(func.count(WorkerMovementORM.id))
             
-            # Usar count() en SQLAlchemy
-            return query.count()
+            # Aplicar TODOS los filtros
+            query = self._apply_filters(query, filters, allowed_lines)
+            
+            return query.scalar() or 0 # Usar scalar() para count
         except SQLAlchemyError as e:
             raise RepositoryError("Error al contar los movimientos por filtros.") from e
 
     def get_paginated_by_filters(
-        self, filters: WorkerMovementFilters, page: int, page_size: int
+        self, filters: WorkerMovementFilters, page: int, page_size: int, allowed_lines: List[str]
     ) -> Tuple[List[WorkerMovement], int]:
+        """Obtiene movimientos paginados aplicando filtros de seguridad y de usuario."""
         try:
-            base_query = self.db.query(WorkerMovementORM)
-            
             # 1. Obtener el conteo total con los filtros
-            count_query = self._apply_filters(base_query.session.query(func.count(WorkerMovementORM.id)), filters)
-            total_records = count_query.scalar()
+            # (Llama al método de conteo que ya tiene la lógica de filtros)
+            total_records = self.count_by_filters(filters, allowed_lines)
             
             if total_records == 0:
                 return [], 0
             
             # 2. Aplicar filtros, paginación y ordenamiento para los datos
-            data_query = self._apply_filters(base_query, filters)
+            base_query = self.db.query(WorkerMovementORM)
+            data_query = self._apply_filters(base_query, filters, allowed_lines)
             
-            # Ordenar por hora/fecha para paginación consistente (asumiendo descendente como en tu ejemplo)
+            # Ordenar por hora/fecha para paginación consistente
             data_query = data_query.order_by(WorkerMovementORM.fecha_p.desc(), WorkerMovementORM.hora.desc())
             
             # Aplicar paginación
@@ -174,7 +200,13 @@ class WorkerMovementRepository(IWorkerMovementRepository):
             return domain_entities, total_records
         except SQLAlchemyError as e:
             raise RepositoryError("Error al obtener movimientos paginados.") from e
-        
+            
+    # +++ FIN DE CAMBIOS +++
+
+
+# --- El resto de las clases (RefMotivoRepository, RefDestinoMotivoRepository) ---
+# --- permanecen sin cambios ya que no filtran por línea. ---
+
 class RefMotivoRepository(IRefMotivoRepository):
     def __init__(self, db: Session):
         self.db = db
@@ -199,7 +231,10 @@ class RefMotivoRepository(IRefMotivoRepository):
             )
             
             # 2. Conteo Total
-            total_records = base_query.count()
+            # (Modificado para usar func.count para eficiencia)
+            total_records = base_query.session.query(func.count(RefMotivosORM.id_motivo)).filter(
+                RefMotivosORM.estado == self.ACTIVE_STATUS
+            ).scalar() or 0
             
             if total_records == 0:
                 return [], 0
@@ -246,7 +281,10 @@ class RefDestinoMotivoRepository(IRefDestinoMotivoRepository):
             )
             
             # 2. Conteo Total
-            total_records = base_query.count()
+            # (Modificado para usar func.count para eficiencia)
+            total_records = base_query.session.query(func.count(RefDestinosMotivosORM.id_destino)).filter(
+                RefDestinosMotivosORM.id_motivo == id_motivo
+            ).scalar() or 0
             
             if total_records == 0:
                 return [], 0

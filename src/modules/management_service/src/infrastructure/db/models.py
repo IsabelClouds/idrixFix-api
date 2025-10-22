@@ -14,6 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from src.shared.database import _BaseMain
 from src.modules.management_service.src.domain.entities import TipoMovimiento
+import datetime
 
 class WorkerMovementORM(_BaseMain):
     __tablename__ = "fm_movimientos_operarios"

@@ -1,5 +1,4 @@
-# use_cases.py (Añadir las siguientes importaciones y la clase)
-from typing import List, Optional
+from typing import List, Optional, Dict, Any # <-- Añadido Dict y Any
 from datetime import date, datetime
 from math import ceil
 
@@ -28,44 +27,61 @@ class WorkerMovementUseCases:
         self.repository = repository
 
     def get_movement_by_id(self, movement_id: int) -> Optional[WorkerMovement]:
-        # El caso de uso puede aplicar lógica de negocio (e.g., permisos) antes de llamar al repositorio
         return self.repository.get_by_id(movement_id)
 
     def get_movements_by_date_range(
         self, start_date: date, end_date: date
     ) -> List[WorkerMovement]:
-        # Aquí podría ir una validación de rango de fechas
         return self.repository.get_all_by_date(start_date, end_date)
 
     def create_movement(self, movement_data: WorkerMovementCreate) -> WorkerMovement:
-        # Aquí se podría validar la entidad de dominio si fuera más compleja
         return self.repository.create(movement_data)
 
     def update_movement(
         self, movement_id: int, movement_data: WorkerMovementUpdate
     ) -> Optional[WorkerMovement]:
-        # Aquí podría ir lógica de negocio: ¿quién puede actualizar un movimiento?
         return self.repository.update(movement_id, movement_data)
 
     def delete_movement(self, movement_id: int) -> bool:
-        # Se elimina permanentemente, no hay soft delete en este modelo
         return self.repository.delete(movement_id)
-    
-    def count_movements_by_filters(self, filters: WorkerMovementFilters) -> int:
-        """Caso de uso para contar movimientos."""
-        return self.repository.count_by_filters(filters)
+
+    def count_movements_by_filters(
+        self, filters: WorkerMovementFilters, allowed_lines: List[int]
+    ) -> int:
+        """Caso de uso para contar movimientos, filtrado por líneas permitidas."""
+
+        if not allowed_lines:
+            return 0
+            
+        allowed_lines_str = [str(line_id) for line_id in allowed_lines]
+
+        return self.repository.count_by_filters(filters, allowed_lines_str)
+
     def get_movements_paginated_by_filters(
-        self, filters: WorkerMovementPagination
+        self, filters: WorkerMovementPagination, allowed_lines: List[int]
     ) -> WorkerMovementPaginatedResponse:
-        """Caso de uso para obtener movimientos paginados con metadatos."""
+        """Caso de uso para obtener movimientos paginados con metadatos, filtrado por líneas permitidas."""
         
+        if not allowed_lines:
+            return {
+                "total_records": 0,
+                "total_pages": 0,
+                "page": filters.page,
+                "page_size": filters.page_size,
+                "data": [],
+            }
+        
+        allowed_lines_str = [str(line_id) for line_id in allowed_lines]
+
         data, total_records = self.repository.get_paginated_by_filters(
-            filters=filters, page=filters.page, page_size=filters.page_size
+            filters=filters, 
+            page=filters.page, 
+            page_size=filters.page_size,
+            allowed_lines=allowed_lines_str  # <-- Nuevo argumento
         )
         
         total_pages = ceil(total_records / filters.page_size) if total_records > 0 else 0
 
-        # Retornamos un DTO con la información de paginación
         return {
             "total_records": total_records,
             "total_pages": total_pages,
@@ -73,15 +89,13 @@ class WorkerMovementUseCases:
             "page_size": filters.page_size,
             "data": data, # Lista de entidades de dominio
         }
-    
+
 class RefMotivoUseCases:
     def __init__(self, repository: IRefMotivoRepository):
         self.repository = repository
         
     def count_active_motives(self, filters: RefMotivoFilters) -> int:
         """Cuenta el total de motivos activos (el filtro ACTIVO es implícito en el repo)."""
-        # Aunque RefMotivoFilters está vacío, lo pasamos por consistencia
-        # para que el repositorio pueda usar el método de conteo base si es necesario.
         _, total_records = self.repository.get_paginated_active(page=1, page_size=1)
         return total_records
 

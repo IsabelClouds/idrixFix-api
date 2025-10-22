@@ -180,7 +180,7 @@ class LineaORM(_BaseMain):
     LINE_FECCRE = Column(DateTime,default=datetime.datetime.now)
     LINE_FECMOD = Column(DateTime,nullable=True)
     
-    LINE_PLANTA = Column(Integer,ForeignKey("dbo.fm_planta_operarios.PLAN_ID"))
+    LINE_PLANTA = Column(Integer,ForeignKey("fm_planta_operarios.PLAN_ID"))
     planta = relationship("PlantaORM", back_populates="lineas")
 
 

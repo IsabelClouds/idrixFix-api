@@ -39,6 +39,7 @@ class WorkerMovementResponse(WorkerMovementBase):
 class WorkerMovementFilters(BaseModel):
     fecha_inicial: Optional[date] = None
     fecha_final: Optional[date] = None
+    linea: Optional[str] = None
     codigo_operario: Optional[str] = Field(None, max_length=255)
 
 
