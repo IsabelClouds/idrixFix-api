@@ -33,6 +33,19 @@ class LineaAsignadaRepository(ILineaAsignadaRepository):
             )
         except SQLAlchemyError as e:
             raise RepositoryError("Error al verificar existencia de línea.") from e
+    def verificar_datos(self, id_usuario: int, id_linea_externa: int) -> UsuarioLineaAsignada:
+        try:
+            return (
+                self.db.query(UsuarioLineaAsignada)
+                .filter(
+                    UsuarioLineaAsignada.id_usuario == id_usuario,
+                    UsuarioLineaAsignada.id_linea_externa == id_linea_externa
+                )
+                .first()
+            )
+        except SQLAlchemyError as e:
+            raise RepositoryError("Error al verificar existencia de línea.") from e
+
 
     def asignar(self, id_usuario: int, id_linea_externa: int) -> UsuarioLineaAsignada:
         if self.verificar_existencia(id_usuario, id_linea_externa):

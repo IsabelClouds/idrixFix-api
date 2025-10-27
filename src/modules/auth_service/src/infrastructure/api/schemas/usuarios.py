@@ -113,3 +113,27 @@ class LineaExternaResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+
+## LINEAS ASIGNADAS
+class UsuarioLineaAsignadaBase(BaseModel):
+    """Schema base para UsuarioLineaAsignada"""
+    id_linea_externa: int = Field(..., gt=0, description="ID de la línea en la DB externa")
+
+class UsuarioLineaAsignadaResponse(UsuarioLineaAsignadaBase):
+    """Schema para respuesta de UsuarioLineaAsignada"""
+    id_usuario_linea: int
+    id_usuario: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id_usuario_linea": 1,
+                "id_usuario": 1,
+                "id_linea_externa": 101,
+                "created_at": "2024-01-01T08:00:00"
+            }
+        }

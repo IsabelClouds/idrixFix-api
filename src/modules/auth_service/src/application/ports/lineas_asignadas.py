@@ -23,3 +23,7 @@ class ILineaAsignadaRepository(ABC):
     def verificar_existencia(self, id_usuario: int, id_linea_externa: int) -> bool:
         """Verifica si una asignación ya existe"""
         pass
+    @abstractmethod
+    def verificar_datos(self, id_usuario: int, id_linea_externa: int) -> UsuarioLineaAsignada:
+        """Verifica si una asignación ya existe"""
+        pass

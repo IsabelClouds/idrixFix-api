@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict, Any
 from src.shared.base import get_auth_db, get_db
 # Necesitarás una dependencia similar para tu DB externa
 from src.shared.common.responses import success_response
@@ -12,6 +12,10 @@ from src.modules.auth_service.src.application.use_cases.linea_asignada_use_case 
 from src.modules.auth_service.src.application.use_cases.linea_externa_use_case import LineaExternaUseCase
 from src.modules.auth_service.src.infrastructure.api.schemas.usuarios import LineaAsignadaCreate, LineaAsignadaResponse, LineaExternaResponse
 
+from src.shared.security import get_current_user_data
+from src.shared.common.auditoria import get_audit_use_case
+from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
+
 router = APIRouter(
     prefix="/usuarios/{id_usuario}/lineas",
     tags=["Asignación de Líneas"]
@@ -19,13 +23,15 @@ router = APIRouter(
 
 def get_linea_asignada_use_case(
     db_auth: Session = Depends(get_auth_db),
-    db_externa: Session = Depends(get_db)
+    db_externa: Session = Depends(get_db),
+    audit_uc: AuditUseCase = Depends(get_audit_use_case)
 ) -> LineaAsignadaUseCase:
     """Dependency para obtener el caso de uso de asignación de líneas"""
     return LineaAsignadaUseCase(
         usuario_repository=UsuarioRepository(db_auth),
         linea_asignada_repository=LineaAsignadaRepository(db_auth),
-        linea_externa_repository=LineaExternaRepository(db_externa)
+        linea_externa_repository=LineaExternaRepository(db_externa),
+        audit_use_case=audit_uc
     )
 
 
@@ -45,10 +51,11 @@ def get_lineas_de_usuario(
 def asignar_linea_a_usuario(
     id_usuario: int,
     linea_data: LineaAsignadaCreate,
-    use_case: LineaAsignadaUseCase = Depends(get_linea_asignada_use_case)
+    use_case: LineaAsignadaUseCase = Depends(get_linea_asignada_use_case),
+    user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
     """Asigna una línea de trabajo externa a un usuario"""
-    new_data = use_case.asignar_linea(id_usuario, linea_data.id_linea_externa)
+    new_data = use_case.asignar_linea(id_usuario, linea_data.id_linea_externa, user_data)
     return success_response(
         data=LineaAsignadaResponse.model_validate(new_data).model_dump(),
         message="Línea asignada",
@@ -59,10 +66,11 @@ def asignar_linea_a_usuario(
 def remover_linea_de_usuario(
     id_usuario: int,
     id_linea_externa: int,
-    use_case: LineaAsignadaUseCase = Depends(get_linea_asignada_use_case)
+    use_case: LineaAsignadaUseCase = Depends(get_linea_asignada_use_case),
+    user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
     """Remueve la asignación de una línea de un usuario"""
-    use_case.remover_linea(id_usuario, id_linea_externa)
+    use_case.remover_linea(id_usuario, id_linea_externa, user_data)
     return success_response(
         data={"id_usuario": id_usuario, "id_linea_externa_removida": id_linea_externa},
         message="Asignación de línea removida"
