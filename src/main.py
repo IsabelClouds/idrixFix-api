@@ -26,6 +26,7 @@ from src.modules.auth_service.src.infrastructure.api.routers.lineas_asignadas_ro
 from src.modules.management_service.src.infrastructure.api.routers.movimientos_empleado import (
     router as movimientos_empleado_router,
 )
+from src.modules.auth_service.src.infrastructure.api.routers.auditoria_logs_router import router as auditoria_logs
 app = FastAPI(
     title="Administracion API Gateway -- CIESA",
     description="API Gateway que expone todos los servicios de manera unificada (modo monolítico para compatibilidad)",
@@ -58,6 +59,7 @@ app.include_router(lineas_asignadas_router, prefix="/api/lineas-asignadas", tags
 app.include_router(
     movimientos_empleado_router, prefix="/api/movimientos-empleado", tags=["Movimientos Empleados"]
 )
+app.include_router(auditoria_logs, prefix="/api/auditoria", tags=["Auditoria de Registros"])
 
 @app.get("/health")
 async def health_check():
