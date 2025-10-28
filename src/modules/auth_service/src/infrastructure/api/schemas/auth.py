@@ -58,6 +58,7 @@ class TokenVerifyRequest(BaseModel):
 class TokenVerifyResponse(BaseModel):
     """Schema para respuesta de verificación de token"""
     user_id: int
+    is_superuser: bool
     username: str
     rol: Dict[str, Any]
 

@@ -170,6 +170,7 @@ class AuthUseCase:
         return {
             "user_id": usuario.id_usuario,
             "username": usuario.username,
+            "is_superuser": usuario.is_superuser,
             "rol": {
                 "id": rol.id_rol,
                 "nombre": rol.nombre,
