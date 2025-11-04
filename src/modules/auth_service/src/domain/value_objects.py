@@ -168,6 +168,7 @@ class UserSession:
     modulos: List[ModuloInfo]
     token: Token
     lineas_asignadas: List[int]
+    turnos_asignados: List[int]
     is_superuser: bool
 
     def __post_init__(self):
@@ -178,6 +179,8 @@ class UserSession:
             raise ValueError("Username y rol son requeridos")
         if not isinstance(self.lineas_asignadas, list):
             raise ValueError("Líneas asignadas debe ser una lista")
+        if not isinstance(self.turnos_asignados, list):
+            raise ValueError("Turnos asignados debe ser una lista")
 
     def to_response_dict(self) -> dict:
         """Convierte a diccionario para respuesta de login"""
@@ -191,7 +194,8 @@ class UserSession:
                 "nombre": self.rol_nombre,
                 "modulos": [modulo.to_dict() for modulo in self.modulos]
             },
-            "lineas_permitidas": self.lineas_asignadas
+            "lineas_permitidas": self.lineas_asignadas,
+            "turnos_permitidos": self.turnos_asignados
         }
 
     def is_session_valid(self) -> bool:

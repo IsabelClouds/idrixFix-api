@@ -57,6 +57,7 @@ class UsuarioResponse(UsuarioBase):
     rol: Optional[RolResponse] = None
     permisos_modulos: List[Dict[str, Any]] = []
     lineas_asignadas: List[LineaAsignadaResponse] = []
+    turnos_asignados: List[TurnoAsignadoResponse] = []
 
     class Config:
         from_attributes = True
@@ -91,6 +92,9 @@ class UsuarioResponse(UsuarioBase):
                 "lineas_asignadas": [
                     {"id_usuario_linea": 1, "id_usuario": 1, "id_linea_externa": 101, "created_at": "2024-01-01T08:00:00"},
                     {"id_usuario_linea": 2, "id_usuario": 1, "id_linea_externa": 105, "created_at": "2024-01-01T08:00:00"}
+                ],
+                "turnos_asignados": [
+                    {"id_usuario_turno": 1, "id_usuario": 1, "id_turno_externo": 1, "created_at": "2024-01-01T08:00:00"}
                 ]
             }
         }
@@ -119,8 +123,6 @@ class LineaExternaResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
-
 ## LINEAS ASIGNADAS
 class UsuarioLineaAsignadaBase(BaseModel):
     """Schema base para UsuarioLineaAsignada"""
@@ -142,3 +144,26 @@ class UsuarioLineaAsignadaResponse(UsuarioLineaAsignadaBase):
                 "created_at": "2024-01-01T08:00:00"
             }
         }
+
+
+#TURNOS
+class TurnoExternoResponse(BaseModel):
+    """Schema para la respuesta de un Turno Externo (de la DB principal)"""
+    id_turno: int
+    nombre: str
+    estado: str
+
+    class Config:
+        from_attributes = True
+
+class TurnoAsignadoCreate(BaseModel):
+    id_turno_externo: int = Field(..., gt=0, description="ID del turno en la DB externa")
+
+class TurnoAsignadoResponse(BaseModel):
+    id_usuario_turno: int
+    id_usuario: int
+    id_turno_externo: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

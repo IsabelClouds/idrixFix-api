@@ -46,6 +46,9 @@ class Usuario(_BaseAuth):
     
     # Relación uno-a-muchos: Un usuario puede tener muchas líneas asignadas
     lineas_asignadas = relationship("UsuarioLineaAsignada", back_populates="usuario")
+    # Relación uno-a-muchos: Un usuario puede tener muchos turnos asignados
+    turnos_asignados = relationship("UsuarioTurnoAsignado", back_populates="usuario")
+
     @hybrid_property
     def permisos_modulos(self):
         """Obtiene los permisos por módulo del usuario basado en su rol"""
@@ -220,3 +223,39 @@ class PlantaORM(_BaseMain):
     PLAN_FECMOD = Column(DateTime,nullable=True)
 
     lineas = relationship("LineaORM", back_populates="planta")
+
+## TURNOS
+class TurnoORM(_BaseMain):
+    __tablename__ = "fm_turnos_operarios"
+
+    TURN_ID = Column(Integer,primary_key=True,autoincrement=True)
+    TURN_NOMBRE = Column(String(100),nullable=False)
+    TURN_ESTADO = Column(String(20),default='ACTIVO')
+    
+    TURN_FECCRE = Column(DateTime,default=datetime.datetime.now)
+    TURN_FECMOD = Column(DateTime,nullable=True)
+
+class UsuarioTurnoAsignado(_BaseAuth):
+    """
+    Tabla de unión que asigna turnos (de la DB externa) 
+    a los usuarios (de la DB interna).
+    """
+    __tablename__ = "usuario_turnos_asignados"
+    
+    id_usuario_turno = Column(BigInteger, primary_key=True)
+    
+    # 1. Relación con tu Usuario interno
+    id_usuario = Column(BigInteger, ForeignKey("usuarios.id_usuario"), nullable=False, index=True)
+    
+    # 2. ID del turno externo (coincide con TURN_ID de TurnoORM)
+    id_turno_externo = Column(Integer, nullable=False, index=True) 
+    
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    
+    # Relación para que SQLAlchemy la entienda
+    usuario = relationship("Usuario", back_populates="turnos_asignados")
+    
+    # Constraint para evitar duplicados
+    __table_args__ = (
+        UniqueConstraint("id_usuario", "id_turno_externo", name="uq_usuario_turno_externo"),
+    )

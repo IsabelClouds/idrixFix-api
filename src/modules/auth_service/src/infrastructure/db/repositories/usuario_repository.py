@@ -21,7 +21,8 @@ class UsuarioRepository(IUsuarioRepository):
                 self.db.query(Usuario)
                 .options(
                     joinedload(Usuario.rol).joinedload(Rol.permisos_modulo),
-                    joinedload(Usuario.lineas_asignadas)
+                    joinedload(Usuario.lineas_asignadas),
+                    joinedload(Usuario.turnos_asignados)
                 )
                 .all()
             )
@@ -34,7 +35,8 @@ class UsuarioRepository(IUsuarioRepository):
                 self.db.query(Usuario)
                 .options(
                     joinedload(Usuario.rol).joinedload(Rol.permisos_modulo),
-                    joinedload(Usuario.lineas_asignadas)
+                    joinedload(Usuario.lineas_asignadas),
+                    joinedload(Usuario.turnos_asignados)
                 )
                 .filter(Usuario.id_usuario == usuario_id)
                 .first()
@@ -51,7 +53,8 @@ class UsuarioRepository(IUsuarioRepository):
                 self.db.query(Usuario)
                 .options(
                     joinedload(Usuario.rol).joinedload(Rol.permisos_modulo),
-                    joinedload(Usuario.lineas_asignadas)
+                    joinedload(Usuario.lineas_asignadas),
+                    joinedload(Usuario.turnos_asignados)
                 )
                 .filter(Usuario.username == username, Usuario.is_active == True)
                 .first()

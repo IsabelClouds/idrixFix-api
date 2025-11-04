@@ -49,6 +49,10 @@ class AuthUseCase:
                 asignacion.id_linea_externa 
                 for asignacion in usuario.lineas_asignadas or []
             ]
+            turnos_permitidos = [
+                asignacion.id_turno_externo
+                for asignacion in usuario.turnos_asignados or []
+            ]
 
             token = Token.generate(
                 payload={
@@ -76,7 +80,8 @@ class AuthUseCase:
                     "username": usuario.username,
                     "user_id": usuario.id_usuario,  # Mantener para compatibilidad
                     "session_id": sesion.id_sesion,
-                    "lineas": lineas_permitidas
+                    "lineas": lineas_permitidas,
+                    "turnos": turnos_permitidos
                 }
             )
             
@@ -109,7 +114,8 @@ class AuthUseCase:
                 rol_nombre=rol.nombre,
                 modulos=modulos,
                 token=token,
-                lineas_asignadas=lineas_permitidas
+                lineas_asignadas=lineas_permitidas,
+                turnos_asignados=turnos_permitidos
             )
 
             return user_session.to_response_dict()

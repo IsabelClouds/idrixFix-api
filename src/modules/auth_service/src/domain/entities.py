@@ -33,6 +33,7 @@ class Usuario:
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     rol: Optional["Rol"] = None
+    turnos_asignados: List["UsuarioTurnoAsignado"] = None
     def __post_init__(self):
         """Inicializa listas vacías si son None"""
         if self.rol and self.rol.permisos_modulo is None:
@@ -44,6 +45,8 @@ class Usuario:
         """Asigna una línea al usuario"""
         if self.lineas_asignadas is None:
             self.lineas_asignadas = []
+        if self.turnos_asignados is None: # <-- Añadir esto
+            self.turnos_asignados = []
         self.lineas_asignadas.append(linea)
 
     def desactivar(self) -> None:
@@ -248,3 +251,25 @@ class LineaExterna:
     def esta_activa(self) -> bool:
         """Verifica si la línea está activa"""
         return self.estado == "ACTIVO"
+    
+@dataclass
+class TurnoExterno:
+    """
+    Entidad de dominio que representa un Turno de Trabajo
+    de la base de datos externa (principal).
+    """
+    id_turno: int
+    nombre: str
+    estado: str
+
+    def esta_activo(self) -> bool:
+        return self.estado == "ACTIVO"
+
+@dataclass
+class UsuarioTurnoAsignado:
+    """Entidad para la asignación de turnos a usuarios"""
+    id_usuario_turno: Optional[int] = None
+    id_usuario: int = 0
+    id_turno_externo: int = 0
+    created_at: Optional[datetime] = None
+    usuario: Optional["Usuario"] = None

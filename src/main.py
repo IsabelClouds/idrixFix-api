@@ -23,6 +23,9 @@ from src.modules.auth_service.src.infrastructure.api.routers.roles import (
 from src.modules.auth_service.src.infrastructure.api.routers.lineas_asignadas_router import (
     router as lineas_asignadas_router,
 )
+from src.modules.auth_service.src.infrastructure.api.routers.turnos_asignados_router import (
+    router as turnos_asignados_router,
+)
 from src.modules.management_service.src.infrastructure.api.routers.movimientos_empleado import (
     router as movimientos_empleado_router,
 )
@@ -56,9 +59,8 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Autenticación"])
 app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
 app.include_router(roles_router, prefix="/api/roles", tags=["Roles"])
 app.include_router(lineas_asignadas_router, prefix="/api/lineas-asignadas", tags=["Lineas Asignadas"])
-app.include_router(
-    movimientos_empleado_router, prefix="/api/movimientos-empleado", tags=["Movimientos Empleados"]
-)
+app.include_router(turnos_asignados_router, prefix="/api/turnos-asignados", tags=["Turnos Asignados"])
+app.include_router(movimientos_empleado_router, prefix="/api/movimientos-empleado", tags=["Movimientos Empleados"])
 app.include_router(auditoria_logs, prefix="/api/auditoria", tags=["Auditoria de Registros"])
 
 @app.get("/health")
