@@ -1,6 +1,28 @@
 version: '3.8'
 
 services:
+  # --- NUEVO SERVICIO: Base de datos Local en el VPS ---
+  sqlserver_local:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver_local
+    user: root
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${AUTH_DB_PASSWORD} # Usará la contraseña de tu .env
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - management_network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${AUTH_DB_PASSWORD} -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      retries: 10
+      start_period: 10s
+      timeout: 3s
+
   management_service:
     build:
       context: .
@@ -9,6 +31,7 @@ services:
     ports:
       - "8001:8001"
     environment:
+      # DB Externa (sin cambios)
       DATABASE_URL: mssql+pyodbc://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?driver=${DB_DRIVER}&TrustServerCertificate=${DB_TRUST_CERTIFICATE}
       DB_HOST: ${DB_HOST}
       DB_PORT: 1433
@@ -37,6 +60,7 @@ services:
     ports:
       - "8002:8002" 
     environment:
+      # DB Local (Ahora apunta al contenedor sqlserver_local)
       DATABASE_URL: mssql+pyodbc://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${AUTH_DB_NAME}?driver=${AUTH_DB_DRIVER}&TrustServerCertificate=${AUTH_DB_TRUST_CERTIFICATE}
       AUTH_SERVICE_HOST: 0.0.0.0
       AUTH_SERVICE_PORT: 8002
@@ -46,6 +70,9 @@ services:
       PYTHONPATH: /app
     networks:
       - management_network
+    depends_on:
+      sqlserver_local:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s

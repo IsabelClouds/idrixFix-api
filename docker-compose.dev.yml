@@ -1,32 +1,91 @@
-# Docker Compose para desarrollo - servicios individuales
+version: '3.8'
+
 services:
-  # Base de datos SQL Server
-  database:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: management_db_dev
-    environment:
-      SA_PASSWORD: ${DB_PASSWORD}
-      ACCEPT_EULA: Y
-      MSSQL_PID: Express
+  management_service:
+    build:
+      context: .
+      dockerfile: src/modules/management_service/Dockerfile
+    container_name: management_service
     ports:
-      - "${DB_PORT}:1433"
-    volumes:
-      - sqlserver_data_dev:/var/opt/mssql
+      - "8001:8001"
+    environment:
+      DATABASE_URL: mssql+pyodbc://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?driver=${DB_DRIVER}&TrustServerCertificate=${DB_TRUST_CERTIFICATE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: 1433
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DRIVER: ${DB_DRIVER}
+      DB_TRUST_CERTIFICATE: ${DB_TRUST_CERTIFICATE}
+      MANAGEMENT_SERVICE_HOST: 0.0.0.0
+      MANAGEMENT_SERVICE_PORT: 8001
+      PYTHONPATH: /app
     networks:
-      - management_network_dev
+      - management_network
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U ${DB_USER} -P ${DB_PASSWORD} -Q 'SELECT 1'"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 10s
+      retries: 3
+      start_period: 40s
 
-  # Solo levantar la base de datos para desarrollo local
-  # Los servicios se ejecutan directamente con Python para debugging
+  auth_service:
+    build:
+      context: .
+      dockerfile: src/modules/auth_service/Dockerfile
+    container_name: auth_service
+    ports:
+      - "8002:8002" 
+    environment:
+      DATABASE_URL: mssql+pyodbc://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${AUTH_DB_NAME}?driver=${AUTH_DB_DRIVER}&TrustServerCertificate=${AUTH_DB_TRUST_CERTIFICATE}
+      AUTH_SERVICE_HOST: 0.0.0.0
+      AUTH_SERVICE_PORT: 8002
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES}
+      PYTHONPATH: /app
+    networks:
+      - management_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  api_gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      MANAGEMENT_SERVICE_URL: http://management_service:8001
+      AUTH_SERVICE_URL: http://auth_service:8002
+      GATEWAY_HOST: 0.0.0.0
+      GATEWAY_PORT: 8000
+      PYTHONPATH: /app
+    depends_on:
+      management_service:
+        condition: service_healthy
+      auth_service:
+        condition: service_healthy
+    networks:
+      - management_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 networks:
-  management_network_dev:
+  management_network:
     driver: bridge
 
 volumes:
-  sqlserver_data_dev:
+  sqlserver_data:
+
+#docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+#docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
