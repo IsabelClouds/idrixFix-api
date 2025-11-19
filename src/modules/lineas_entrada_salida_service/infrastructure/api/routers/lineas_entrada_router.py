@@ -60,7 +60,7 @@ def get_all_lineas_entrada(
 
 
 @router.get("/{linea_num}/{linea_id}", response_model=LineasEntradaResponse, status_code=status.HTTP_200_OK)
-def get_movement_by_id(
+def get_linea_entrada_by_id(
         linea_id: int,
         use_cases: LineasEntradaUseCase = Depends(get_lineas_entrada_use_case),
         linea_num: int = Path(..., ge=1, le=6, description="Número de Línea (1 al 6)"),

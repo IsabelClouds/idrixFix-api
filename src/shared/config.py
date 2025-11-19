@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     MANAGEMENT_SERVICE_PORT: int = 8001
     AUTH_SERVICE_HOST: str = "localhost"
     AUTH_SERVICE_PORT: int = 8002
+    LINEAS_ENTRADA_SALIDA_SERVICE_HOST: str = "localhost"
+    LINEAS_ENTRADA_SALIDA_SERVICE_PORT: int = 8003
 
 
     # Gateway
@@ -102,6 +104,9 @@ class Settings(BaseSettings):
     @property
     def auth_service_url(self) -> str:
         return f"http://{self.AUTH_SERVICE_HOST}:{self.AUTH_SERVICE_PORT}"
+    @property
+    def lineas_entrada_salida_service_url(self) -> str:
+        return f"http://{self.LINEAS_ENTRADA_SALIDA_SERVICE_HOST}:{self.LINEAS_ENTRADA_SALIDA_SERVICE_PORT}"
 
 
     @property

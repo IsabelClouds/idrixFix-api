@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 
+from src.modules.lineas_entrada_salida_service.infrastructure.api.routers.control_tara_router import router as control_tara_router
+from src.modules.lineas_entrada_salida_service.infrastructure.api.routers.lineas_salida_router import router as lineas_salida_router
 from src.modules.lineas_entrada_salida_service.infrastructure.api.routers.lineas_entrada_router import router as lineas_entrada_router
 from src.shared.common.responses import validation_error_response
 from src.shared.exceptions import DomainError
@@ -65,6 +67,8 @@ app.include_router(turnos_asignados_router, prefix="/api/turnos-asignados", tags
 app.include_router(movimientos_empleado_router, prefix="/api/movimientos-empleado", tags=["Movimientos Empleados"])
 app.include_router(auditoria_logs, prefix="/api/auditoria", tags=["Auditoria de Registros"])
 app.include_router(lineas_entrada_router, prefix="/api/lineas-entrada", tags=["Lineas Entrada"])
+app.include_router(lineas_salida_router, prefix="/api/lineas-salida", tags=["Lineas Salida"])
+app.include_router(control_tara_router, prefix="/api/control-tara", tags=["Control Tara"])
 
 @app.get("/health")
 async def health_check():

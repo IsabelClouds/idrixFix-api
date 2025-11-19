@@ -110,3 +110,6 @@ networks:
 
 volumes:
   sqlserver_data:
+
+#docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+#docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build

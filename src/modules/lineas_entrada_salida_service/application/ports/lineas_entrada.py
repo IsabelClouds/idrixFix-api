@@ -13,7 +13,7 @@ class ILineasEntradaRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_id(self, movement_id: int, linea_num: int) -> Optional[LineasEntrada]:
+    def get_by_id(self, linea_id: int, linea_num: int) -> Optional[LineasEntrada]:
         pass
 
     @abstractmethod

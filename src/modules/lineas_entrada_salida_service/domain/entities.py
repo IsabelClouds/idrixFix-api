@@ -16,7 +16,7 @@ class LineasEntrada:
     guid: Optional[str]
 
 @dataclass
-class LineaUnoSalida:
+class LineasSalida:
     id: int
     fecha_p: Optional[date]
     fecha: Optional[datetime]
@@ -26,3 +26,9 @@ class LineaUnoSalida:
     codigo_parrilla: Optional[str]
     codigo_obrero: Optional[str]
     guid: Optional[str]
+
+@dataclass
+class ControlTara:
+    id: int
+    peso_kg: Optional[float]
+    is_active: bool
