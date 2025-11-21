@@ -10,7 +10,7 @@ from src.modules.lineas_entrada_salida_service.domain.entities import LineasSali
 from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_filters import LineasFilters
 from src.modules.lineas_entrada_salida_service.infrastructure.db.models import LineaUnoSalidaORM, LineaDosSalidaORM, \
     LineaTresSalidaORM, LineaCuatroSalidaORM, LineaCincoSalidaORM, LineaSeisSalidaORM
-from src.shared.exceptions import RepositoryError
+from src.shared.exceptions import RepositoryError, NotFoundError
 
 LINEA_ORM_MAPPER = {
     1: LineaUnoSalidaORM,
@@ -77,7 +77,7 @@ class LineasSalidaRepository(ILineasSalidaRepository):
                     guid=linea_orm.guid
                 )
         except SQLAlchemyError as e:
-            raise RepositoryError("Error al consultar la linea entrada.") from e
+            raise RepositoryError("Error al consultar la linea salida.") from e
 
     def get_paginated_by_filters(self, filters: LineasFilters, page: int, page_size: int, linea_num: int) -> Tuple[
         List[LineasSalida], int]:
@@ -117,7 +117,7 @@ class LineasSalidaRepository(ILineasSalidaRepository):
             return domain_entities, total_records
         except SQLAlchemyError as e:
             logging.error(f"FALLO DE DB DETALLADO: {e}")
-            raise RepositoryError("Error al obtener todas las líneas entrada.") from e
+            raise RepositoryError("Error al obtener todas las líneas salida.") from e
 
     #TODO hacer el update
 
@@ -148,3 +148,16 @@ class LineasSalidaRepository(ILineasSalidaRepository):
     #     except SQLAlchemyError as e:
     #         self.db.rollback()
     #         raise RepositoryError("Error al actualizar la producción de la linea entrada.") from e
+
+    def remove(self, linea_id: int, linea_num: int) -> bool:
+        try:
+            linea_orm = self.db.query(self._get_orm_model(linea_num)).get(linea_id)
+            if not linea_orm:
+                raise NotFoundError(f"Producción de linea salida con id={linea_id} no encontrado.")
+            self.db.delete(linea_orm)
+            self.db.commit()
+            return True
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            logging.error(f"FALLO DE DB DETALLADO: {e}")
+            raise RepositoryError("Error al elimar linea salida.") from e

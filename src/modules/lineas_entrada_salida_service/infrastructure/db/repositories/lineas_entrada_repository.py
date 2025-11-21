@@ -68,17 +68,17 @@ class LineasEntradaRepository(ILineasEntradaRepository):
             if not linea_orm:
                 return None
             return LineasEntrada(
-                    id=linea_orm.id,
-                    fecha_p=linea_orm.fecha_p,
-                    fecha=linea_orm.fecha,
-                    peso_kg=linea_orm.peso_kg,
-                    turno=linea_orm.turno,
-                    codigo_secuencia=linea_orm.codigo_secuencia,
-                    codigo_parrilla=linea_orm.codigo_parrilla,
-                    p_lote=linea_orm.p_lote,
-                    hora_inicio=linea_orm.hora_inicio,
-                    guid=linea_orm.guid
-                )
+                id=linea_orm.id,
+                fecha_p=linea_orm.fecha_p,
+                fecha=linea_orm.fecha,
+                peso_kg=linea_orm.peso_kg,
+                turno=linea_orm.turno,
+                codigo_secuencia=linea_orm.codigo_secuencia,
+                codigo_parrilla=linea_orm.codigo_parrilla,
+                p_lote=linea_orm.p_lote,
+                hora_inicio=linea_orm.hora_inicio,
+                guid=linea_orm.guid
+            )
         except SQLAlchemyError as e:
             raise RepositoryError("Error al consultar la linea entrada.") from e
 
@@ -136,17 +136,30 @@ class LineasEntradaRepository(ILineasEntradaRepository):
             self.db.commit()
             self.db.refresh(orm_model)
             return LineasEntrada(
-                    id=orm_model.id,
-                    fecha_p=orm_model.fecha_p,
-                    fecha=orm_model.fecha,
-                    peso_kg=orm_model.peso_kg,
-                    turno=orm_model.turno,
-                    codigo_secuencia=orm_model.codigo_secuencia,
-                    codigo_parrilla=orm_model.codigo_parrilla,
-                    p_lote=orm_model.p_lote,
-                    hora_inicio=orm_model.hora_inicio,
-                    guid=orm_model.guid
-                )
+                id=orm_model.id,
+                fecha_p=orm_model.fecha_p,
+                fecha=orm_model.fecha,
+                peso_kg=orm_model.peso_kg,
+                turno=orm_model.turno,
+                codigo_secuencia=orm_model.codigo_secuencia,
+                codigo_parrilla=orm_model.codigo_parrilla,
+                p_lote=orm_model.p_lote,
+                hora_inicio=orm_model.hora_inicio,
+                guid=orm_model.guid
+            )
         except SQLAlchemyError as e:
             self.db.rollback()
             raise RepositoryError("Error al actualizar la producción de la linea entrada.") from e
+
+    def remove(self, linea_id: int, linea_num: int) -> bool:
+        try:
+            linea_orm = self.db.query(self._get_orm_model(linea_num)).get(linea_id)
+            if not linea_orm:
+                raise NotFoundError(f"Producción de linea entrada con id={linea_id} no encontrado.")
+            self.db.delete(linea_orm)
+            self.db.commit()
+            return True
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            logging.error(f"FALLO DE DB DETALLADO: {e}")
+            raise RepositoryError("Error al elimar linea entrada.") from e

@@ -88,11 +88,29 @@ def update_linea_entrada(
         updated_data = use_cases.update_linea_entrada(linea_id, linea_entrada_data, linea_num)
         return success_response(
             data=LineasEntradaResponse.model_validate(updated_data).model_dump(mode="json"),
-            message = "Producción linea entrada actualizada"
+            message="Producción linea entrada actualizada"
         )
     except NotFoundError as e:
         return error_response(
             message=str(e), status_code=status.HTTP_404_NOT_FOUND
+        )
+    except RepositoryError as e:
+        return error_response(
+            message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.delete("/{linea_num}/{linea_id}", status_code=status.HTTP_200_OK)
+def remove_linea_entrada(
+        linea_id: int,
+        linea_num: int,
+        use_cases: LineasEntradaUseCase = Depends(get_lineas_entrada_use_case),
+):
+    try:
+        use_cases.remove_linea_entrada(linea_id,linea_num)
+        return success_response(
+            data={"id_linea_entrada_removida": linea_id},
+            message="Linea Entrada removida"
         )
     except RepositoryError as e:
         return error_response(

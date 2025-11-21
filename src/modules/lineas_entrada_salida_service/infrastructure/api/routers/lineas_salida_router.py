@@ -97,3 +97,19 @@ def get_linea_salida_by_id(
 #         return error_response(
 #             message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
 #         )
+
+@router.delete("/{linea_num}/{linea_id}", status_code=status.HTTP_200_OK)
+def remove_linea_salida(
+        linea_id: int,
+        linea_num: int,
+        use_cases: LineasSalidaUseCase = Depends(get_lineas_salida_use_case),
+):
+    try:
+        use_cases.remove_linea_salida(linea_id,linea_num)
+        return success_response(
+            data={"id_linea_salida_removida": linea_id},
+            message="Linea Salida removida"
+        )
+    except RepositoryError as e:
+        return error_response(
+            message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

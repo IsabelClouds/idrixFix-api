@@ -19,3 +19,7 @@ class ILineasEntradaRepository(ABC):
     @abstractmethod
     def update(self, linea_id: int, linea_entrada_data: LineasEntradaUpdate, linea_num: int) -> Optional[LineasEntrada]:
         pass
+
+    @abstractmethod
+    def remove(self, linea_id: int, linea_num: int) -> bool:
+        pass

@@ -7,6 +7,7 @@ from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas
     LineasEntradaPaginatedResponse, LineasEntradaUpdate
 from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_filters import \
     LineasPagination
+from src.shared.exceptions import NotFoundError
 
 
 class LineasEntradaUseCase:
@@ -35,6 +36,14 @@ class LineasEntradaUseCase:
         return self.lineas_entrada_repository.get_by_id(linea_id, linea_num)
 
     #TODO agregar auditorias
-    def update_linea_entrada(self, linea_id, linea_entrada_data: LineasEntradaUpdate, linea_num: int) -> Optional[LineasEntrada]:
+    def update_linea_entrada(self, linea_id: int, linea_entrada_data: LineasEntradaUpdate, linea_num: int) -> Optional[LineasEntrada]:
         updated_linea_entrada = self.lineas_entrada_repository.update(linea_id, linea_entrada_data, linea_num)
         return updated_linea_entrada
+
+    # TODO agregar auditorias
+    def remove_linea_entrada(self, linea_id: int, linea_num:int) -> bool:
+        linea_entrada = self.lineas_entrada_repository.get_by_id(linea_id, linea_num)
+        if not linea_entrada:
+            raise NotFoundError(f"Linea entrada con id={linea_id} no encontrada")
+
+        return self.lineas_entrada_repository.remove(linea_id, linea_num)
