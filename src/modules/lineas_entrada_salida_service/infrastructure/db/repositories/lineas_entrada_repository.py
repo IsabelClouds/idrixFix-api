@@ -36,9 +36,9 @@ class LineasEntradaRepository(ILineasEntradaRepository):
     def _apply_filters(self, query, filters: LineasFilters, orm_model):
         conditions = []
 
-        if filters.fecha_inicial and filters.fecha_final:
+        if filters.fecha:
             conditions.append(
-                orm_model.fecha_p.between(filters.fecha_inicial, filters.fecha_final)
+                orm_model.fecha_p == filters.fecha
             )
 
         if conditions:

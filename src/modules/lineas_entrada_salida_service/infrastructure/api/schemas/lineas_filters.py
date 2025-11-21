@@ -5,8 +5,7 @@ from pydantic import BaseModel, conint
 
 
 class LineasFilters(BaseModel):
-    fecha_inicial: Optional[date] = None
-    fecha_final: Optional[date] = None
+    fecha: Optional[date] = None
 
 class LineasPagination(LineasFilters):
     page: conint(ge=1) = 1
