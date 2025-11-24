@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter, status
 from fastapi.params import Depends
+from pyexpat.errors import messages
 from sqlalchemy.orm import Session
 
 from src.modules.lineas_entrada_salida_service.application.use_cases.control_tara_use_case import ControlTaraUseCase
@@ -12,10 +13,22 @@ from src.shared.common.responses import success_response, error_response
 
 router = APIRouter()
 
+
 def get_tara_use_case(db: Session = Depends(get_auth_db)) -> ControlTaraUseCase:
     return ControlTaraUseCase(
         control_tara_repository=ControlTaraRepository(db)
     )
+
+
+@router.get("/", status_code=status.HTTP_200_OK)
+def get_all_taras(
+        use_case: ControlTaraUseCase = Depends(get_tara_use_case)
+):
+    return success_response(
+        data=use_case.get_all_taras(),
+        message="Taras obtenidas"
+    )
+
 
 @router.post("/", response_model=TaraResponse, status_code=status.HTTP_201_CREATED)
 def create_tara(
@@ -29,18 +42,29 @@ def create_tara(
         status_code=201
     )
 
-#TODO fix
-# @router.get("/{tara_id}", response_model=TaraResponse, status_code=status.HTTP_201_CREATED)
-# def get_tara_by_id(
-#         tara_id: int,
-#         use_case: ControlTaraUseCase = Depends(get_tara_use_case)
-# ):
-#     data = use_case.get_tara_by_id(tara_id)
-#     if not data:
-#         return error_response(
-#             message="Tara no encontrada", status_code=status.HTTP_404_NOT_FOUND
-#         )
-#     return success_response(
-#         data=TaraResponse.model_validate(data).model_dump(mode="json"),
-#         message="Tara obtenida",
-#     )
+
+@router.get("/{tara_id}", response_model=TaraResponse, status_code=status.HTTP_200_OK)
+def get_tara_by_id(
+        tara_id: int,
+        use_case: ControlTaraUseCase = Depends(get_tara_use_case)
+):
+    data = use_case.get_tara_by_id(tara_id)
+    if not data:
+        return error_response(
+            message="Tara no encontrada", status_code=status.HTTP_404_NOT_FOUND
+        )
+    return success_response(
+        data=TaraResponse.model_validate(data).model_dump(mode="json"),
+        message="Tara obtenida"
+    )
+
+
+@router.delete("/{tara_id}", status_code=status.HTTP_200_OK)
+def soft_delete_tara(
+        tara_id: int,
+        use_case: ControlTaraUseCase = Depends(get_tara_use_case)
+):
+    return success_response(
+        data=use_case.soft_delete(tara_id),
+        message=f"Tara con id {tara_id} eliminada con exito"
+    )
