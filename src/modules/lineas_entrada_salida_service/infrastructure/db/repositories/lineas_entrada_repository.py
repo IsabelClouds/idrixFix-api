@@ -163,3 +163,29 @@ class LineasEntradaRepository(ILineasEntradaRepository):
             self.db.rollback()
             logging.error(f"FALLO DE DB DETALLADO: {e}")
             raise RepositoryError("Error al elimar linea entrada.") from e
+
+    def update_codigo_parrilla(self, linea_id: int, linea_num: int, valor: str) -> Optional[LineasEntrada]:
+        try:
+            linea_orm = self.db.query(self._get_orm_model(linea_num)).get(linea_id)
+            if linea_orm is None:
+                raise NotFoundError(f"Producción de linea entrada con id={linea_id} no encontrado.")
+
+            linea_orm.codigo_parrilla = valor
+            self.db.commit()
+            self.db.refresh(linea_orm)
+
+            return LineasEntrada(
+                id=linea_orm.id,
+                fecha_p=linea_orm.fecha_p,
+                fecha=linea_orm.fecha,
+                peso_kg=linea_orm.peso_kg,
+                turno=linea_orm.turno,
+                codigo_secuencia=linea_orm.codigo_secuencia,
+                codigo_parrilla=linea_orm.codigo_parrilla,
+                p_lote=linea_orm.p_lote,
+                hora_inicio=linea_orm.hora_inicio,
+                guid=linea_orm.guid
+            )
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise RepositoryError("Error al actualizar el código de parrilla de la línea entrada.") from e

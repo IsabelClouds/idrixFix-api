@@ -23,3 +23,7 @@ class ILineasEntradaRepository(ABC):
     @abstractmethod
     def remove(self, linea_id: int, linea_num: int) -> bool:
         pass
+
+    @abstractmethod
+    def update_codigo_parrilla(self, linea_id: int, linea_num: int, valor: str) -> Optional[LineasEntrada]:
+        pass

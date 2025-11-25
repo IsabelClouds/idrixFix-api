@@ -138,3 +138,5 @@ def agregar_tara(
         return error_response(
             message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+

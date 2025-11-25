@@ -47,3 +47,11 @@ class LineasEntradaUseCase:
             raise NotFoundError(f"Linea entrada con id={linea_id} no encontrada")
 
         return self.lineas_entrada_repository.remove(linea_id, linea_num)
+
+    #TODO agregar auditorías
+    def update_codigo_parrilla(self, linea_id: int, linea_num: int, valor: int):
+        linea = self.lineas_entrada_repository.get_by_id(linea_id, linea_num)
+
+        nuevo_valor = str(int(linea.codigo_parrilla or 0) + valor)
+
+        return self.lineas_entrada_repository.update_codigo_parrilla(linea_id, linea_num, nuevo_valor)

@@ -164,17 +164,14 @@ class LineasSalidaRepository(ILineasSalidaRepository):
     def agregar_tara(self, linea_id: int, linea_num: int, peso_kg: float) -> Optional[LineasSalida]:
         orm_model = self._get_orm_model(linea_num)
         try:
-            # Consultar la línea de salida
             linea_orm = self.db.query(orm_model).filter(orm_model.id == linea_id).one_or_none()
             if linea_orm is None:
                 return None
 
-            # Actualizar solo el peso
             linea_orm.peso_kg = peso_kg
             self.db.commit()
             self.db.refresh(linea_orm)
 
-            # Convertir a entidad de dominio
             return LineasSalida(
                 id=linea_orm.id,
                 fecha_p=linea_orm.fecha_p,
