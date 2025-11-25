@@ -22,3 +22,7 @@ class ILineasSalidaRepository(ABC):
     @abstractmethod
     def remove(self, linea_id: int, linea_num: int) -> bool:
         pass
+
+    @abstractmethod
+    def agregar_tara(self, linea_id: int, linea_num: int, peso_kg: float) -> Optional[LineasSalida]:
+        pass

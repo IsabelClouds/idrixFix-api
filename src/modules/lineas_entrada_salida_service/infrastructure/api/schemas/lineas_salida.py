@@ -27,3 +27,6 @@ class LineasSalidaPaginatedResponse(BaseModel):
     page: int
     page_size: int
     data: List[LineasSalidaResponse]
+
+class TaraIdRequest(BaseModel):
+    tara_id: float

@@ -2,12 +2,14 @@ from fastapi import APIRouter, Depends, status, Path
 from sqlalchemy.orm import Session
 
 from src.modules.lineas_entrada_salida_service.application.use_cases.lineas_salida_use_case import LineasSalidaUseCase
+from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_salida import TaraIdRequest
 from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_filters import LineasPagination
 from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_salida import LineasSalidaResponse, \
     LineasSalidaUpdate
+from src.modules.lineas_entrada_salida_service.infrastructure.db.repositories.control_tara import ControlTaraRepository
 from src.modules.lineas_entrada_salida_service.infrastructure.db.repositories.lineas_salida_repository import \
     LineasSalidaRepository
-from src.shared.base import get_db
+from src.shared.base import get_db, get_auth_db
 from src.shared.common.responses import success_response, error_response
 from src.shared.exceptions import RepositoryError, NotFoundError
 
@@ -15,10 +17,12 @@ router = APIRouter()
 
 
 def get_lineas_salida_use_case(
-        db_externa: Session = Depends(get_db)
+        db_externa: Session = Depends(get_db),
+        db_auth: Session = Depends(get_auth_db)
 ) -> LineasSalidaUseCase:
     return LineasSalidaUseCase(
-        lineas_salida_repository=LineasSalidaRepository(db_externa)
+        lineas_salida_repository=LineasSalidaRepository(db_externa),
+        control_tara_repository=ControlTaraRepository(db_auth)
     )
 
 
@@ -112,3 +116,25 @@ def remove_linea_salida(
     except RepositoryError as e:
         return error_response(
             message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@router.patch("/{linea_num}/{linea_id}/agregar_tara", response_model=LineasSalidaResponse, status_code=status.HTTP_200_OK)
+def agregar_tara(
+        linea_id: int,
+        linea_num: int,
+        data: TaraIdRequest,
+        use_case: LineasSalidaUseCase = Depends(get_lineas_salida_use_case)
+):
+    try:
+        updated_data = use_case.agregar_tara(linea_id, linea_num, data.tara_id)
+        return success_response(
+            data=LineasSalidaResponse.model_validate(updated_data).model_dump(mode="json"),
+            message= "Tara agregada correctamente"
+        )
+    except NotFoundError as e:
+        return error_response(
+            message=str(e), status_code=status.HTTP_404_NOT_FOUND
+        )
+    except RepositoryError as e:
+        return error_response(
+            message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

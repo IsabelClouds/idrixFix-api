@@ -29,4 +29,3 @@ class LineasEntradaPaginatedResponse(BaseModel):
     page: int
     page_size: int
     data: List[LineasEntradaResponse]
-

@@ -1,6 +1,7 @@
 from math import ceil
 from typing import Optional
 
+from src.modules.lineas_entrada_salida_service.application.ports.control_tara import IControlTaraRepository
 from src.modules.lineas_entrada_salida_service.application.ports.lineas_salida import ILineasSalidaRepository
 from src.modules.lineas_entrada_salida_service.domain.entities import LineasSalida
 from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_filters import LineasPagination
@@ -10,8 +11,9 @@ from src.shared.exceptions import NotFoundError
 
 
 class LineasSalidaUseCase:
-    def __init__(self, lineas_salida_repository: ILineasSalidaRepository):
+    def __init__(self, lineas_salida_repository: ILineasSalidaRepository, control_tara_repository:  IControlTaraRepository):
         self.lineas_salida_repository = lineas_salida_repository
+        self.control_tara_repository = control_tara_repository
 
     def get_lineas_salida_paginated_by_filters(self, filters: LineasPagination, linea_num: int) -> LineasSalidaPaginatedResponse:
         data, total_records = self.lineas_salida_repository.get_paginated_by_filters(
@@ -46,3 +48,11 @@ class LineasSalidaUseCase:
             raise NotFoundError(f"Linea entrada con id={linea_id} no encontrada")
 
         return self.lineas_salida_repository.remove(linea_id, linea_num)
+
+    #TODO agrega auditorías
+    def agregar_tara(self, linea_id: int, linea_num: int, tara_id: int) -> Optional[LineasSalida]:
+        linea = self.lineas_salida_repository.get_by_id(linea_id, linea_num)
+        tara = self.control_tara_repository.get_by_id(tara_id)
+
+        linea.peso_kg -= tara.peso_kg
+        return self.lineas_salida_repository.agregar_tara(linea_id, linea_num, linea.peso_kg)
