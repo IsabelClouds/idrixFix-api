@@ -8,7 +8,7 @@ from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas
     LineasEntradaPaginatedResponse, LineasEntradaUpdate, LineasEntradaResponse
 from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_filters import \
     LineasPagination
-from src.shared.exceptions import NotFoundError
+from src.shared.exceptions import NotFoundError, ValidationError
 
 
 class LineasEntradaUseCase:
@@ -81,6 +81,9 @@ class LineasEntradaUseCase:
 
     def update_codigo_parrilla(self, linea_id: int, linea_num: int, valor: int, user_data: Dict[str, Any]):
         linea = self.lineas_entrada_repository.get_by_id(linea_id, linea_num)
+
+        if valor == 0:
+            raise ValidationError("El valor no puede ser cero.")
 
         nuevo_valor = str(int(linea.codigo_parrilla or 0) + valor)
         updated = self.lineas_entrada_repository.update_codigo_parrilla(linea_id, linea_num, nuevo_valor)
