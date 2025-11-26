@@ -4,7 +4,7 @@ from src.modules.auth_service.src.application.use_cases.audit_use_case import Au
 from src.modules.lineas_entrada_salida_service.application.ports.control_tara import IControlTaraRepository
 from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.control_tara import TaraCreate, TaraResponse
 from src.modules.lineas_entrada_salida_service.domain.entities import ControlTara
-from src.shared.exceptions import AlreadyExistsError
+from src.shared.exceptions import AlreadyExistsError, ValidationError
 
 
 class ControlTaraUseCase:
@@ -16,6 +16,8 @@ class ControlTaraUseCase:
         exist = self.control_tara_repository.exists_by_peso_kg(tara_data.peso_kg)
         if exist:
             raise AlreadyExistsError("Ya existe una tara con este peso asignado")
+        if tara_data.peso_kg <= 0:
+            raise ValidationError("El peso de la tara debe ser mayor a cero")
         nueva_tara = self.control_tara_repository.create(tara_data)
         self.audit_use_case.log_action(
             accion="CREATE",
