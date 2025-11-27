@@ -88,7 +88,7 @@ def get_linea_salida_by_id(
 
 
 @router.patch("/{linea_num}/{linea_id}", response_model=LineasSalidaResponse, status_code=status.HTTP_200_OK)
-def update_linea_entrada(
+def update_linea_salida(
         linea_id: int,
         linea_salida_data: LineasSalidaUpdate,
         use_cases: LineasSalidaUseCase = Depends(get_lineas_salida_use_case),

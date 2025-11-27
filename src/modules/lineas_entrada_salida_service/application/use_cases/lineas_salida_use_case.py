@@ -1,3 +1,4 @@
+from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
 from typing import Optional, Dict, Any
 
@@ -81,15 +82,32 @@ class LineasSalidaUseCase:
 
         return self.lineas_salida_repository.remove(linea_id, linea_num)
 
-    def agregar_tara(self, linea_id: int, linea_num: int, tara_id: int, user_data: Dict[str, Any]) -> Optional[LineasSalida]:
+    from decimal import Decimal
+
+    def agregar_tara(self, linea_id: int, linea_num: int, tara_id: int, user_data: Dict[str, Any]) -> Optional[
+        LineasSalida]:
         linea = self.lineas_salida_repository.get_by_id(linea_id, linea_num)
         tara = self.control_tara_repository.get_by_id(tara_id)
 
-        linea.peso_kg -= tara.peso_kg
-        if linea.peso_kg <= 0:
+        # convertir ambos valores a Decimal
+        peso = Decimal(str(linea.peso_kg))
+        tara_peso = Decimal(str(tara.peso_kg))
+
+        # restar
+        nuevo_peso = peso - tara_peso
+
+        if nuevo_peso <= 0:
             raise ValidationError("El peso debe quedar mayor que cero")
 
-        updated_linea_salida = self.lineas_salida_repository.agregar_tara(linea_id, linea_num, linea.peso_kg)
+        # redondear a máximo 3 decimales
+        nuevo_peso = nuevo_peso.quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+
+        updated_linea_salida = self.lineas_salida_repository.agregar_tara(
+            linea_id,
+            linea_num,
+            float(nuevo_peso)
+        )
+
         self.audit_use_case.log_action(
             accion="UPDATE",
             user_id=user_data.get("user_id"),
