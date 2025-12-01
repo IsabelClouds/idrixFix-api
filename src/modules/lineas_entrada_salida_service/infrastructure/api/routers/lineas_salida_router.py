@@ -209,6 +209,6 @@ def agregar_panza(
         user_data=user_data
     )
     return success_response(
-        data=[LineasSalidaResponse.model_validate(l).model_dump(mode="json") for l in updated_items],
+        data=f"Se actualizaron {updated_items} registros",
         message="Panza agregada correctamente a los registros"
     )

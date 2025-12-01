@@ -145,7 +145,7 @@ class LineasSalidaUseCase:
     def get_all_by_filters(self, filters: LineasFilters, linea_num: int) -> List[LineasSalida]:
         return self.lineas_salida_repository.get_all_by_filters(filters, linea_num)
 
-    def agregar_panza(self, linea_num: int, data: PanzaRequest, user_data: Dict[str, Any]):
+    def agregar_panza(self, linea_num: int, data: PanzaRequest, user_data: Dict[str, Any]) -> int:
         if data.peso_kg <= 0: raise ValidationError("El peso debe ser mayor que cero.")
 
         # Obtener TODOS los registros filtrados
@@ -157,7 +157,7 @@ class LineasSalidaUseCase:
             raise NotFoundError("No se encontraron registros con los filtros proporcionados.")
 
         peso_panza_dec = Decimal(str(data.peso_kg))
-        updated_items = []
+        contador = 0
         for linea in lineas:
             peso_dec = Decimal(str(linea.peso_kg))
             nuevo_peso = float((peso_dec + peso_panza_dec).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
@@ -174,6 +174,6 @@ class LineasSalidaUseCase:
             )
 
             # Agregar a la lista de resultados
-            updated_items.append(updated_linea)
+            contador += 1
 
-        return updated_items
+        return contador
