@@ -2,6 +2,8 @@ from datetime import date, datetime, time
 from pydantic import BaseModel
 from typing import Optional, List
 
+from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_shared import LineasFilters
+
 
 class LineasSalidaResponse(BaseModel):
     id: int
@@ -30,3 +32,6 @@ class LineasSalidaPaginatedResponse(BaseModel):
 
 class TaraIdRequest(BaseModel):
     tara_id: int
+
+class PanzaRequest(LineasFilters):
+    peso_kg: float

@@ -22,7 +22,6 @@ LINEA_ORM_MAPPER = {
     6: LineaSeisSalidaORM
 }
 
-
 class LineasSalidaRepository(ILineasSalidaRepository):
     def __init__(self, db: Session):
         self.db = db
@@ -37,9 +36,10 @@ class LineasSalidaRepository(ILineasSalidaRepository):
         conditions = []
 
         if filters.fecha:
-            conditions.append(
-                orm_model.fecha_p == filters.fecha
-            )
+            conditions.append(orm_model.fecha_p == filters.fecha)
+
+        if filters.lote:
+            conditions.append(orm_model.p_lote == filters.lote)
 
         if conditions:
             query = query.filter(and_(*conditions))
@@ -81,6 +81,37 @@ class LineasSalidaRepository(ILineasSalidaRepository):
         except SQLAlchemyError as e:
             raise RepositoryError("Error al consultar la linea salida.") from e
 
+    def get_all_by_filters(self, filters: LineasFilters, linea_num: int) -> List[LineasSalida]:
+        orm_model = self._get_orm_model(linea_num)
+
+        try:
+            query = self.db.query(orm_model)
+            query = self._apply_filters(query, filters, orm_model)
+
+            query = query.order_by(orm_model.fecha_p.desc())
+
+            lineas_orm = query.all()
+
+            domain_entities = [
+                LineasSalida(
+                    id=linea.id,
+                    fecha_p=linea.fecha_p,
+                    fecha=linea.fecha,
+                    peso_kg=linea.peso_kg,
+                    codigo_bastidor=linea.codigo_bastidor,
+                    p_lote=linea.p_lote,
+                    codigo_parrilla=linea.codigo_parrilla,
+                    codigo_obrero=linea.codigo_obrero,
+                    guid=linea.guid
+                )
+                for linea in lineas_orm
+            ]
+            return domain_entities
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise RepositoryError("Error al obtener registros filtrados.") from e
+
+
     def get_paginated_by_filters(self, filters: LineasFilters, page: int, page_size: int, linea_num: int) -> Tuple[
         List[LineasSalida], int]:
         orm_model = self._get_orm_model(linea_num)
@@ -115,11 +146,11 @@ class LineasSalidaRepository(ILineasSalidaRepository):
                 )
                 for linea in lineas_entrada_data
             ]
-
             return domain_entities, total_records
         except SQLAlchemyError as e:
             logging.error(f"FALLO DE DB DETALLADO: {e}")
             raise RepositoryError("Error al obtener todas las líneas salida.") from e
+
 
     def update(self, linea_id: int, linea_salida_data: LineasSalidaUpdate, linea_num: int) -> Optional[LineasSalida]:
         orm_model = self.db.query(self._get_orm_model(linea_num)).get(linea_id)
@@ -161,6 +192,7 @@ class LineasSalidaRepository(ILineasSalidaRepository):
             logging.error(f"FALLO DE DB DETALLADO: {e}")
             raise RepositoryError("Error al elimar linea salida.") from e
 
+
     def agregar_tara(self, linea_id: int, linea_num: int, peso_kg: float) -> Optional[LineasSalida]:
         orm_model = self._get_orm_model(linea_num)
         try:
@@ -187,6 +219,7 @@ class LineasSalidaRepository(ILineasSalidaRepository):
             self.db.rollback()
             raise RepositoryError("Error al agregar la tara a la línea salida.") from e
 
+
     def update_codigo_parrilla(self, linea_id: int, linea_num: int, valor_parrilla: str) -> Optional[LineasSalida]:
         try:
             linea_orm = self.db.query(self._get_orm_model(linea_num)).get(linea_id)
@@ -211,3 +244,32 @@ class LineasSalidaRepository(ILineasSalidaRepository):
         except SQLAlchemyError as e:
             self.db.rollback()
             raise RepositoryError("Error al actualizar el código de parrilla de la línea salida.") from e
+
+
+    def agregar_panza(self, linea_id: int, linea_num: int, nuevo_peso: float) -> Optional[LineasSalida]:
+        try:
+            orm_model = self._get_orm_model(linea_num)
+            linea_orm = self.db.query(orm_model).get(linea_id)
+
+            if linea_orm is None:
+                raise NotFoundError(f"Registro con id={linea_id} no encontrado.")
+
+            linea_orm.peso_kg = nuevo_peso
+            self.db.commit()
+            self.db.refresh(linea_orm)
+
+            return LineasSalida(
+                id=linea_orm.id,
+                fecha_p=linea_orm.fecha_p,
+                fecha=linea_orm.fecha,
+                peso_kg=linea_orm.peso_kg,
+                codigo_bastidor=linea_orm.codigo_bastidor,
+                p_lote=linea_orm.p_lote,
+                codigo_parrilla=linea_orm.codigo_parrilla,
+                codigo_obrero=linea_orm.codigo_obrero,
+                guid=linea_orm.guid
+            )
+
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise RepositoryError("Error al actualizar peso.") from e

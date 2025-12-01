@@ -1,19 +1,21 @@
 from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.modules.lineas_entrada_salida_service.application.ports.control_tara import IControlTaraRepository
 from src.modules.lineas_entrada_salida_service.application.ports.lineas_salida import ILineasSalidaRepository
 from src.modules.lineas_entrada_salida_service.domain.entities import LineasSalida
-from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_shared import LineasPagination
+from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_shared import LineasPagination, \
+    LineasFilters
 from src.modules.lineas_entrada_salida_service.infrastructure.api.schemas.lineas_salida import \
-    LineasSalidaPaginatedResponse, LineasSalidaUpdate, LineasSalidaResponse
+    LineasSalidaPaginatedResponse, LineasSalidaUpdate, LineasSalidaResponse, PanzaRequest
 from src.shared.exceptions import NotFoundError, ValidationError
 
 
 class LineasSalidaUseCase:
-    def __init__(self, lineas_salida_repository: ILineasSalidaRepository, control_tara_repository:  IControlTaraRepository, audit_use_case: AuditUseCase):
+    def __init__(self, lineas_salida_repository: ILineasSalidaRepository,
+                 control_tara_repository: IControlTaraRepository, audit_use_case: AuditUseCase):
         self.lineas_salida_repository = lineas_salida_repository
         self.control_tara_repository = control_tara_repository
         self.audit_use_case = audit_use_case
@@ -32,7 +34,8 @@ class LineasSalidaUseCase:
     def _modelo_auditoria(self, linea_num: int) -> str:
         return f"reg_linea_{self._numero_en_letras(linea_num)}_salida"
 
-    def get_lineas_salida_paginated_by_filters(self, filters: LineasPagination, linea_num: int) -> LineasSalidaPaginatedResponse:
+    def get_lineas_salida_paginated_by_filters(self, filters: LineasPagination,
+                                               linea_num: int) -> LineasSalidaPaginatedResponse:
         data, total_records = self.lineas_salida_repository.get_paginated_by_filters(
             filters=filters,
             page=filters.page,
@@ -40,7 +43,7 @@ class LineasSalidaUseCase:
             linea_num=linea_num
         )
 
-        total_pages = ceil(total_records/ filters.page_size) if total_records > 0 else 0
+        total_pages = ceil(total_records / filters.page_size) if total_records > 0 else 0
 
         return {
             "total_records": total_records,
@@ -53,7 +56,8 @@ class LineasSalidaUseCase:
     def get_linea_salida_by_id(self, linea_id: int, linea_num: int) -> Optional[LineasSalida]:
         return self.lineas_salida_repository.get_by_id(linea_id, linea_num)
 
-    def update_linea_salida(self, linea_id, linea_salida_data: LineasSalidaUpdate, linea_num: int, user_data: Dict[str, Any]) -> Optional[LineasSalida]:
+    def update_linea_salida(self, linea_id, linea_salida_data: LineasSalidaUpdate, linea_num: int,
+                            user_data: Dict[str, Any]) -> Optional[LineasSalida]:
         linea_salida = self.lineas_salida_repository.get_by_id(linea_id, linea_num)
         updated_linea_salida = self.lineas_salida_repository.update(linea_id, linea_salida_data, linea_num)
         self.audit_use_case.log_action(
@@ -81,8 +85,6 @@ class LineasSalidaUseCase:
         )
 
         return self.lineas_salida_repository.remove(linea_id, linea_num)
-
-    from decimal import Decimal
 
     def agregar_tara(self, linea_id: int, linea_num: int, tara_id: int, user_data: Dict[str, Any]) -> Optional[
         LineasSalida]:
@@ -136,3 +138,42 @@ class LineasSalidaUseCase:
             datos_anteriores=LineasSalidaResponse.model_validate(linea).model_dump(mode="json")
         )
         return updated
+
+    def count_lineas_salida(self, filters: LineasFilters, linea_num: int) -> int:
+        return self.lineas_salida_repository.count_by_filters(filters, linea_num)
+
+    def get_all_by_filters(self, filters: LineasFilters, linea_num: int) -> List[LineasSalida]:
+        return self.lineas_salida_repository.get_all_by_filters(filters, linea_num)
+
+    def agregar_panza(self, linea_num: int, data: PanzaRequest, user_data: Dict[str, Any]):
+        if data.peso_kg <= 0: raise ValidationError("El peso debe ser mayor que cero.")
+
+        # Obtener TODOS los registros filtrados
+        lineas = self.lineas_salida_repository.get_all_by_filters(
+            filters=LineasFilters(fecha=data.fecha, lote=data.lote),
+            linea_num=linea_num
+        )
+        if not lineas:
+            raise NotFoundError("No se encontraron registros con los filtros proporcionados.")
+
+        peso_panza_dec = Decimal(str(data.peso_kg))
+        updated_items = []
+        for linea in lineas:
+            peso_dec = Decimal(str(linea.peso_kg))
+            nuevo_peso = float((peso_dec + peso_panza_dec).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
+            updated_linea = self.lineas_salida_repository.agregar_panza(linea.id, linea_num, nuevo_peso)
+
+            # Auditoría por registro
+            self.audit_use_case.log_action(
+                accion="UPDATE",
+                user_id=user_data.get("user_id"),
+                modelo=self._modelo_auditoria(linea_num),
+                entidad_id=linea.id,
+                datos_nuevos=LineasSalidaResponse.model_validate(updated_linea).model_dump(mode="json"),
+                datos_anteriores=LineasSalidaResponse.model_validate(linea).model_dump(mode="json")
+            )
+
+            # Agregar a la lista de resultados
+            updated_items.append(updated_linea)
+
+        return updated_items
