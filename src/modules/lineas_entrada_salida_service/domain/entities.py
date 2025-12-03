@@ -30,5 +30,7 @@ class LineasSalida:
 @dataclass
 class ControlTara:
     id: int
+    nombre: str
+    descripcion: str
     peso_kg: Optional[float]
     is_active: bool

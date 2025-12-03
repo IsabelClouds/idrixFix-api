@@ -22,7 +22,6 @@ class ModuloEnum(Enum):
     CONTROL_TARA = "CONTROL_TARA"
     CONTROL_PANZA = "CONTROL_PANZA"
 
-
 class PermisoEnum(Enum):
     """Enum para los tipos de permisos"""
     READ = "read"
