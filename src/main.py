@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 
-from src.modules.administracion.src.infrastructure.api.routers.area_operarios_router import router as area_operarios_router
+from src.modules.administracion_service.src.infrastructure.api.routers.area_operarios_router import router as area_operarios_router
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.routers.control_tara_router import router as control_tara_router
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.routers.lineas_salida_router import router as lineas_salida_router
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.routers.lineas_entrada_router import router as lineas_entrada_router

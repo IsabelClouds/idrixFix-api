@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from src.modules.administracion.src.infrastructure.api.routers.area_operarios_router import router as area_operarios_router
+from src.modules.administracion_service.src.infrastructure.api.routers.area_operarios_router import router as area_operarios_router
 from src.shared.cors_config import configure_cors
 
 app = FastAPI(
@@ -16,7 +16,7 @@ app.include_router(area_operarios_router, prefix="/api/administracion/area-opera
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "lineas_entrada_salida_service"}
+    return {"status": "healthy", "service": "administracion_service"}
 
 
 if __name__ == "__main__":

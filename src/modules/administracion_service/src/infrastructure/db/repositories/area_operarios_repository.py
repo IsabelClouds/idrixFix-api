@@ -4,10 +4,10 @@ from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from src.modules.administracion.src.application.ports.area_operarios import IAreaOperarioRepository
-from src.modules.administracion.src.domain.entities import AreaOperarios
-from src.modules.administracion.src.infrastructure.api.schemas.area_operarios import AreaOperariosRequest
-from src.modules.administracion.src.infrastructure.db.models import AreaOperariosORM
+from src.modules.administracion_service.src.application.ports.area_operarios import IAreaOperarioRepository
+from src.modules.administracion_service.src.domain.entities import AreaOperarios
+from src.modules.administracion_service.src.infrastructure.api.schemas.area_operarios import AreaOperariosRequest
+from src.modules.administracion_service.src.infrastructure.db.models import AreaOperariosORM
 from src.shared.exceptions import RepositoryError, NotFoundError
 
 

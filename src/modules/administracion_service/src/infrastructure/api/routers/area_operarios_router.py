@@ -2,10 +2,10 @@ from fastapi import APIRouter, status
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
-from src.modules.administracion.src.application.use_case.area_operarios_use_case import AreaOperariosUseCase
-from src.modules.administracion.src.infrastructure.api.schemas.area_operarios import AreaOperariosRequest, \
+from src.modules.administracion_service.src.application.use_case.area_operarios_use_case import AreaOperariosUseCase
+from src.modules.administracion_service.src.infrastructure.api.schemas.area_operarios import AreaOperariosRequest, \
     AreaOperariosResponse
-from src.modules.administracion.src.infrastructure.db.repositories.area_operarios_repository import \
+from src.modules.administracion_service.src.infrastructure.db.repositories.area_operarios_repository import \
     AreaOperariosRepository
 from src.shared.base import get_db
 from src.shared.common.responses import success_response

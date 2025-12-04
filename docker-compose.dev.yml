@@ -53,6 +53,46 @@ services:
       retries: 3
       start_period: 40s
 
+  lineas_entrada_salida_service:
+    build:
+      context: .
+      dockerfile: src/modules/lineas_entrada_salida_service/Dockerfile
+    container_name: lineas_entrada_salida_service
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: mssql+pyodbc://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${AUTH_DB_NAME}?driver=${AUTH_DB_DRIVER}&TrustServerCertificate=${AUTH_DB_TRUST_CERTIFICATE}
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8003
+      PYTHONPATH: /app
+    networks:
+      - management_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  administracion_service:
+    build:
+      context: .
+      dockerfile: src/modules/administracion_service/Dockerfile
+    container_name: administracion_service
+    ports:
+      - "8004:8004"
+    environment:
+      DATABASE_URL: mssql+pyodbc://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${AUTH_DB_NAME}?driver=${AUTH_DB_DRIVER}&TrustServerCertificate=${AUTH_DB_TRUST_CERTIFICATE}
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8003
+      PYTHONPATH: /app
+    networks:
+      - management_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   api_gateway:
     build:
       context: .
@@ -70,6 +110,10 @@ services:
       management_service:
         condition: service_healthy
       auth_service:
+        condition: service_healthy
+      lineas_entrada_salida_service:
+        condition: service_healthy
+      administracion_service:
         condition: service_healthy
     networks:
       - management_network

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from src.modules.administracion.src.domain.entities import AreaOperarios
-from src.modules.administracion.src.infrastructure.api.schemas.area_operarios import AreaOperariosRequest
+from src.modules.administracion_service.src.domain.entities import AreaOperarios
+from src.modules.administracion_service.src.infrastructure.api.schemas.area_operarios import AreaOperariosRequest
 
 
 class IAreaOperarioRepository(ABC):
