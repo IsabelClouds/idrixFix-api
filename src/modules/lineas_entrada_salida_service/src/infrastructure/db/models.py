@@ -171,5 +171,7 @@ class ControlTaraOrm(_BaseAuth):
     __tablename__ = "control_tara"
 
     id = Column(Integer, primary_key=True)
-    peso_kg = Column(Float)
-    is_active = Column(Boolean, nullable=False, default=True)
+    nombre = Column(String(100), nullable=False)
+    descripcion = Column(String(255))
+    peso_kg = Column(Float, nullable=False)
+    is_active = Column(Boolean, default=True)

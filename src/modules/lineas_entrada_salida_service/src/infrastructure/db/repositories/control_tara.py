@@ -26,6 +26,8 @@ class ControlTaraRepository(IControlTaraRepository):
             return [
                 ControlTara(
                     id=t.id,
+                    nombre=t.nombre,
+                    descripcion=t.descripcion,
                     peso_kg=t.peso_kg,
                     is_active=t.is_active
                 )
@@ -38,6 +40,8 @@ class ControlTaraRepository(IControlTaraRepository):
     def create(self, tara_data: TaraCreate) -> ControlTara:
         try:
             db_tara = ControlTaraOrm(
+                nombre = tara_data.nombre,
+                descripcion = tara_data.descripcion,
                 peso_kg=tara_data.peso_kg
             )
 
@@ -46,6 +50,8 @@ class ControlTaraRepository(IControlTaraRepository):
             self.db.refresh(db_tara)
             return ControlTara(
                 id=db_tara.id,
+                nombre=db_tara.nombre,
+                descripcion=db_tara.descripcion,
                 peso_kg=db_tara.peso_kg,
                 is_active=db_tara.is_active
             )
@@ -65,6 +71,8 @@ class ControlTaraRepository(IControlTaraRepository):
                 return None
             return ControlTara(
                 id=tara_orm.id,
+                nombre=tara_orm.nombre,
+                descripcion=tara_orm.descripcion,
                 peso_kg=tara_orm.peso_kg,
                 is_active=tara_orm.is_active
             )
@@ -97,6 +105,20 @@ class ControlTaraRepository(IControlTaraRepository):
                 self.db.query(ControlTaraOrm.id)
                 .filter(
                     ControlTaraOrm.peso_kg == peso_kg_tara,
+                    ControlTaraOrm.is_active == True
+                )
+                .first()
+            )
+            return tara_orm is not None
+        except SQLAlchemyError as e:
+            raise RepositoryError("Error al consultar existencia de la tara.") from e
+
+    def exists_by_nombre(self, nombre: str) -> bool:
+        try:
+            tara_orm = (
+                self.db.query(ControlTaraOrm.id)
+                .filter(
+                    ControlTaraOrm.nombre == nombre,
                     ControlTaraOrm.is_active == True
                 )
                 .first()

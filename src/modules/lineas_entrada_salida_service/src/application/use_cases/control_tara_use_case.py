@@ -13,8 +13,11 @@ class ControlTaraUseCase:
         self.audit_use_case = audit_use_case
 
     def create_tara(self, tara_data: TaraCreate, user_data: Dict[str, Any]) -> ControlTara:
-        exist = self.control_tara_repository.exists_by_peso_kg(tara_data.peso_kg)
-        if exist:
+        exists_by_nombre = self.control_tara_repository.exists_by_nombre(tara_data.nombre)
+        if exists_by_nombre:
+            raise AlreadyExistsError("Ya existe una tara con este nombre")
+        exists_by_peso_kg = self.control_tara_repository.exists_by_peso_kg(tara_data.peso_kg)
+        if exists_by_peso_kg:
             raise AlreadyExistsError("Ya existe una tara con este peso asignado")
         if tara_data.peso_kg <= 0:
             raise ValidationError("El peso de la tara debe ser mayor a cero")
