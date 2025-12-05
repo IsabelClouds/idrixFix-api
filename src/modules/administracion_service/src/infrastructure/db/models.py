@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Date, DateTime, Float, String, Time, Boolean
+from sqlalchemy import Column, Integer, Date, DateTime, Float, String, Time, Boolean, Index
 from src.shared.database import _BaseMain
 from datetime import datetime
 
@@ -11,3 +11,17 @@ class AreaOperariosORM(_BaseMain):
 
     AREA_FECCRE = Column(DateTime, default=datetime.now)
     AREA_FECMOD = Column(DateTime, nullable=True)
+
+class ControlLoteAsiglineaORM(_BaseMain):
+    __tablename__ = "fm_control_lote_asiglinea"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    fecha_p = Column(Date)
+    lote = Column(String(255))
+    linea = Column(String(255))
+    estado = Column(String(50))
+    fecha_asig = Column(DateTime)
+    tipo_limpieza = Column(Integer)
+    turno = Column(Integer)
+
+    __table_args__ = (Index('idx_fecha_p_lote_linea', 'fecha_p', 'lote', 'linea'),)
