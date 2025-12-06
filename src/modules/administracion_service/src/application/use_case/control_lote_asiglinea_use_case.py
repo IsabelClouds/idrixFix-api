@@ -34,7 +34,10 @@ class ControlLoteAsiglineaUseCase:
         return self.control_lote_asiglinea_repository.update(data, id)
 
     def get_lote_by_id(self, id: int) -> Optional[ControlLoteAsiglinea]:
-        return self.control_lote_asiglinea_repository.get_by_id(id)
+        lote = self.control_lote_asiglinea_repository.get_by_id(id)
+        if not lote:
+            raise NotFoundError("El lote no existe")
+        return lote
 
     def remove_lote(self, id: int) -> bool:
         exists = self.control_lote_asiglinea_repository.exists_by_id(id)
