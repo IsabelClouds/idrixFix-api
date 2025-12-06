@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Date, DateTime, Float, String, Time, Boolean, Index
+from sqlalchemy import Column, Integer, Date, DateTime, Float, String, Time, Boolean, Index, DECIMAL
 from src.shared.database import _BaseMain
 from datetime import datetime
 
@@ -25,3 +25,20 @@ class ControlLoteAsiglineaORM(_BaseMain):
     turno = Column(Integer)
 
     __table_args__ = (Index('idx_fecha_p_lote_linea', 'fecha_p', 'lote', 'linea'),)
+
+class EspeciesORM(_BaseMain):
+    __tablename__ = "fm_especies"
+
+    especie_id = Column(Integer, primary_key=True, autoincrement=True)
+    especie_nombre = Column(String(100), unique=True, nullable=False)
+    especie_familia = Column(String(100))
+    especie_rend_normal = Column(DECIMAL(precision=20, scale=10))
+    especie_merm_coccion = Column(DECIMAL(precision=20, scale=10))
+    especie_kilos_horas = Column(DECIMAL(precision=20, scale=10))
+    especie_piezas = Column(DECIMAL(precision=20, scale=10))
+    especie_peso_promed = Column(DECIMAL(precision=20, scale=10))
+    especie_peso_crudo = Column(DECIMAL(precision=20, scale=10))
+    especie_rendimiento = Column(DECIMAL(precision=20, scale=10))
+    especie_time_limpieza = Column(DECIMAL(precision=20, scale=10))
+    especies_kilos_horas_media = Column(DECIMAL(precision=20, scale=10))
+    especies_kilos_horas_doble = Column(DECIMAL(precision=20, scale=10))

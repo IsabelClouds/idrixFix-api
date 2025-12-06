@@ -149,6 +149,7 @@ class ControlLoteAsiglineaRepository(IControlLoteAsiglineaRepository):
             )
         except SQLAlchemyError as e:
             self.db.rollback()
+            raise RepositoryError("Error al actualizar el lote.") from e
 
     def remove(self, id: int) -> bool:
         try:

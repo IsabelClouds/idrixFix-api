@@ -24,6 +24,7 @@ class ModuloEnum(Enum):
     ADMINISTRACION = "ADMINISTRACION"
     AREA_OPERARIOS = "AREA_OPERARIOS"
     CONTROL_LOTE = "CONTROL_LOTE"
+    ESPECIES = "ESPECIES"
 
 class PermisoEnum(Enum):
     """Enum para los tipos de permisos"""

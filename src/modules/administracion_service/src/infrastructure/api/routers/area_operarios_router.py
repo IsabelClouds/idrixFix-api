@@ -41,7 +41,7 @@ def get_area_operario_by_id(
         message="Area Operarios Obtenidas"
     )
 
-@router.post("/", status_code=status.HTTP_200_OK, response_model=AreaOperariosResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=AreaOperariosResponse)
 def create_area_operario(
         data: AreaOperariosRequest,
         use_case: AreaOperariosUseCase = Depends(get_area_operarios_use_case)
