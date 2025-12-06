@@ -30,6 +30,17 @@ def get_all_area_operarios(
         message="Areas Operarios Obtenidas"
     )
 
+@router.get("/{area_id}", status_code=status.HTTP_200_OK, response_model=AreaOperariosResponse)
+def get_area_operario_by_id(
+        area_id: int,
+        use_case: AreaOperariosUseCase = Depends(get_area_operarios_use_case)
+):
+    response = use_case.get_area_by_id(area_id)
+    return success_response(
+        data=AreaOperariosResponse.model_validate(response).model_dump(mode="json"),
+        message="Area Operarios Obtenidas"
+    )
+
 @router.post("/", status_code=status.HTTP_200_OK, response_model=AreaOperariosResponse)
 def create_area_operario(
         data: AreaOperariosRequest,

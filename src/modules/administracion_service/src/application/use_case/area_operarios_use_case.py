@@ -13,6 +13,12 @@ class AreaOperariosUseCase:
     def get_all_areas_operarios(self) -> List[AreaOperarios]:
         return self.area_operarios_repository.get_all()
 
+    def get_area_by_id(self, id: int) -> Optional[AreaOperarios]:
+        area = self.area_operarios_repository.get_by_id(id)
+        if not area:
+            raise NotFoundError("No existe el area")
+        return area
+
     def create_area_operarios(self, data: AreaOperariosRequest) -> AreaOperarios:
         if not data.area_nombre:
             raise ValidationError("El nombre no puede estar vacío")
