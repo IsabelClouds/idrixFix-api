@@ -11,7 +11,6 @@ class AreaOperarios:
     area_feccre: Optional[datetime]
     area_fecmod: Optional[datetime]
 
-
 @dataclass
 class ControlLoteAsiglinea:
     id: int
@@ -22,7 +21,6 @@ class ControlLoteAsiglinea:
     fecha_asig: Optional[datetime]
     tipo_limpieza: Optional[int]
     turno: Optional[int]
-
 
 @dataclass
 class Especie:
@@ -40,7 +38,6 @@ class Especie:
     especies_kilos_horas_media: Optional[float] = None
     especies_kilos_horas_doble: Optional[float] = None
 
-
 @dataclass
 class Linea:
     line_id: int
@@ -50,7 +47,6 @@ class Linea:
     line_fecmod: Optional[datetime]
     line_planta: Optional[int]
 
-
 @dataclass
 class Planta:
     plan_id: int
@@ -58,3 +54,11 @@ class Planta:
     plan_estado: Optional[str] = None
     plan_feccre: Optional[datetime] = None
     plan_fecmod: Optional[datetime] = None
+
+@dataclass
+class PlanningTurno:
+    plnn_id: int
+    plnn_fecha_p: Optional[date] = None
+    plnn_turno: Optional[int] = None
+    plnn_linea: Optional[str] = None
+    plnn_hora_fin: Optional[datetime] = None

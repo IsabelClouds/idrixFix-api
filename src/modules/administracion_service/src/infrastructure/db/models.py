@@ -43,3 +43,14 @@ class EspeciesORM(_BaseMain):
     especie_time_limpieza = Column(DECIMAL(precision=20, scale=10))
     especies_kilos_horas_media = Column(DECIMAL(precision=20, scale=10))
     especies_kilos_horas_doble = Column(DECIMAL(precision=20, scale=10))
+
+class PlanningTurnoORM(_BaseMain):
+    __tablename__ = "fm_planning_fnturno"
+
+    plnn_id = Column(Integer, primary_key=True, autoincrement=True)
+    plnn_fecha_p = Column(Date)
+    plnn_turno = Column(Integer)
+    plnn_linea = Column(String(255))
+    plnn_hora_fin = Column(DateTime)
+
+    __table_args__ = (Index('idx_fecha_p_linea_turno', 'plnn_fecha_p', 'plnn_linea', 'plnn_turno'),)
