@@ -28,7 +28,7 @@ class ControlLoteAsiglineaPagination(ControlLoteAsiglineaFilters):
     page_size: conint(ge=1) = 20
 
 class EstadoLote(str, Enum):
-    PROCCESS = "PROCCESS"
+    PROCESS = "PROCESS"
     FINISHED = "FINISHED"
     STOPPED = "STOPPED"
 
