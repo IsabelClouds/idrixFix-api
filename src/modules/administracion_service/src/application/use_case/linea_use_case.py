@@ -18,7 +18,7 @@ class LineaUseCase:
 
         exists = self.lineas_repository.exists_by_nombre(data.line_nombre)
         if exists:
-            raise AlreadyExistsError("La linea ya existe")
+            raise AlreadyExistsError("Ya existe una linea con este nombre")
 
         linea = self.lineas_repository.create(data)
         planta = self.planta_repository.get_by_id(linea.line_planta)
@@ -38,7 +38,7 @@ class LineaUseCase:
 
         exists = self.lineas_repository.exists_by_nombre(data.line_nombre)
         if exists:
-            raise AlreadyExistsError("La linea ya existe")
+            raise AlreadyExistsError("Ya existe una linea con este nombre")
 
         linea = self.lineas_repository.update(data, id)
         planta = self.planta_repository.get_by_id(linea.line_planta)
