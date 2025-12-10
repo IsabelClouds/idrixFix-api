@@ -68,3 +68,10 @@ class DetalleProduccionORM(_BaseMain):
     DPRO_TURNOX = Column(Integer,nullable=True)
 
     __table_args__ = (Index('DPRO_FECPROD', 'DPRO_LOTE','DPRO_LINEA'),)
+
+class TipoLimpiezaORM(_BaseMain):
+    __tablename__ = "cfg_tipo_limpieza"
+
+    id_tipo_limpieza = Column(Integer, primary_key=True)
+    nombre = Column(String(50))
+    estado = Column(String(20))

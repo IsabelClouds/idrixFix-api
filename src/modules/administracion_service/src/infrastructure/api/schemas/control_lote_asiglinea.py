@@ -5,6 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, conint
 
 from src.modules.administracion_service.src.infrastructure.api.schemas.shared import LineaEnum, TurnoEnum
+from src.modules.administracion_service.src.infrastructure.api.schemas.tipo_limpieza import TipoLimpiezaResponse
 
 
 class ControlLoteAsiglineaResponse(BaseModel):
@@ -14,7 +15,7 @@ class ControlLoteAsiglineaResponse(BaseModel):
     linea : Optional[str]
     estado : Optional[str]
     fecha_asig : Optional[datetime]
-    tipo_limpieza : Optional[int]
+    tipo_limpieza : Optional[TipoLimpiezaResponse]
     turno : Optional[int]
 
     class Config:

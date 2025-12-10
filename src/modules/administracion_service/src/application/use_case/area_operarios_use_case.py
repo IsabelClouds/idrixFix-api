@@ -35,6 +35,10 @@ class AreaOperariosUseCase:
         if not area:
             raise NotFoundError("No se encontró el area")
 
+        exist = self.area_operarios_repository.exists_by_name(data.area_nombre)
+        if exist:
+            raise AlreadyExistsError("Ya existe un area con este nombre")
+
         return self.area_operarios_repository.update(data, id)
 
     def remove_area(self, id: int) -> bool:

@@ -72,3 +72,9 @@ class DetalleProduccion:
     dpro_ppanza: Optional[float] = None
     dpro_pdesperdicio: Optional[float] = None
     dpro_turnox: Optional[int] = None
+
+@dataclass
+class TipoLimpieza:
+    id_tipo_limpieza: int
+    nombre: Optional[str] = None
+    estado: Optional[str] = None

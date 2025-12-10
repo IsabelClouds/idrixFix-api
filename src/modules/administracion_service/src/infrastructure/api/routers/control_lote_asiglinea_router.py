@@ -10,6 +10,8 @@ from src.modules.administracion_service.src.infrastructure.api.schemas.control_l
     ControlLoteAsiglineaPagination, ControlLoteAsiglineaResponse, ControlLoteAsiglineaUpdate
 from src.modules.administracion_service.src.infrastructure.db.repositories.control_lote_asiglinea_repository import \
     ControlLoteAsiglineaRepository
+from src.modules.administracion_service.src.infrastructure.db.repositories.tipo_limpieza_repository import \
+    TipoLimpiezaRepository
 from src.shared.base import get_db
 from src.shared.common.responses import success_response, error_response
 from src.shared.exceptions import RepositoryError
@@ -21,7 +23,8 @@ def get_control_lote_asiglinea_use_case(
         db: Session = Depends(get_db)
 ) -> ControlLoteAsiglineaUseCase:
     return ControlLoteAsiglineaUseCase(
-        control_lote_asiglinea_repository=ControlLoteAsiglineaRepository(db)
+        control_lote_asiglinea_repository=ControlLoteAsiglineaRepository(db),
+        tipo_limpieza_repository=TipoLimpiezaRepository(db)
     )
 
 
