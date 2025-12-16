@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from fastapi import APIRouter, status
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
@@ -6,17 +8,22 @@ from src.modules.administracion_service.src.application.use_case.especies_use_ca
 from src.modules.administracion_service.src.infrastructure.api.schemas.especies import EspeciesResponse, \
     EspeciesRequest, EspeciesPaginated
 from src.modules.administracion_service.src.infrastructure.db.repositories.especies_repository import EspeciesRepository
+from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.shared.base import get_db
+from src.shared.common.auditoria import get_audit_use_case
 from src.shared.common.responses import success_response
+from src.shared.security import get_current_user_data
 
 router = APIRouter()
 
 
 def get_especies_use_case(
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        audit_uc: AuditUseCase = Depends(get_audit_use_case)
 ) -> EspeciesUseCase:
     return EspeciesUseCase(
-        especies_repository=EspeciesRepository(db)
+        especies_repository=EspeciesRepository(db),
+        audit_use_case=audit_uc
     )
 
 
@@ -60,9 +67,10 @@ def get_especie_by_id(
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=EspeciesResponse)
 def create_especie(
         data: EspeciesRequest,
-        use_case: EspeciesUseCase = Depends(get_especies_use_case)
+        use_case: EspeciesUseCase = Depends(get_especies_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
-    response = use_case.create_especie(data)
+    response = use_case.create_especie(data, user_data)
     return success_response(
         data=EspeciesResponse.model_validate(response).model_dump(mode="json"),
         message="Especie creada"
@@ -73,9 +81,10 @@ def create_especie(
 def update_especie(
         especie_id: int,
         data: EspeciesRequest,
-        use_case: EspeciesUseCase = Depends(get_especies_use_case)
+        use_case: EspeciesUseCase = Depends(get_especies_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
-    response = use_case.update_especie(especie_id, data)
+    response = use_case.update_especie(especie_id, data, user_data)
     return success_response(
         data=EspeciesResponse.model_validate(response).model_dump(mode="json"),
         message="Especie actualizada correctamente"

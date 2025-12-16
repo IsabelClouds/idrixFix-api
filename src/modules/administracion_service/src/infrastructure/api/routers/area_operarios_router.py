@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from fastapi import APIRouter, status
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
@@ -7,17 +9,22 @@ from src.modules.administracion_service.src.infrastructure.api.schemas.area_oper
     AreaOperariosResponse
 from src.modules.administracion_service.src.infrastructure.db.repositories.area_operarios_repository import \
     AreaOperariosRepository
+from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.shared.base import get_db
+from src.shared.common.auditoria import get_audit_use_case
 from src.shared.common.responses import success_response, error_response
 from src.shared.exceptions import RepositoryError
+from src.shared.security import get_current_user_data
 
 router = APIRouter()
 
 def get_area_operarios_use_case(
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        audit_uc: AuditUseCase = Depends(get_audit_use_case)
 ) -> AreaOperariosUseCase:
     return AreaOperariosUseCase(
-        area_operarios_repository=AreaOperariosRepository(db)
+        area_operarios_repository=AreaOperariosRepository(db),
+        audit_use_case=audit_uc
     )
 
 @router.get("/", status_code=status.HTTP_200_OK)
@@ -44,9 +51,10 @@ def get_area_operario_by_id(
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=AreaOperariosResponse)
 def create_area_operario(
         data: AreaOperariosRequest,
-        use_case: AreaOperariosUseCase = Depends(get_area_operarios_use_case)
+        use_case: AreaOperariosUseCase = Depends(get_area_operarios_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
-    new_data = use_case.create_area_operarios(data)
+    new_data = use_case.create_area_operarios(data, user_data)
     return success_response(
         data=AreaOperariosResponse.model_validate(new_data).model_dump(mode="json"),
         message="Area Operarios creada satisfactoriamente",
@@ -57,9 +65,10 @@ def create_area_operario(
 def update_area_operario(
         area_id: int,
         data: AreaOperariosRequest,
-        use_case: AreaOperariosUseCase = Depends(get_area_operarios_use_case)
+        use_case: AreaOperariosUseCase = Depends(get_area_operarios_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
-    response = use_case.update_area_operarios(data, area_id)
+    response = use_case.update_area_operarios(data, area_id, user_data)
 
     return success_response(
         data=AreaOperariosResponse.model_validate(response).model_dump(mode="json"),
@@ -69,10 +78,11 @@ def update_area_operario(
 @router.delete("/{area_id}", status_code=status.HTTP_200_OK)
 def remove_area(
         area_id: int,
-        use_case: AreaOperariosUseCase = Depends(get_area_operarios_use_case)
+        use_case: AreaOperariosUseCase = Depends(get_area_operarios_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
     try:
-        use_case.remove_area(area_id)
+        use_case.remove_area(area_id, user_data)
         return success_response(
             data={"id_area removida": area_id},
             message="Area Operarios removida"

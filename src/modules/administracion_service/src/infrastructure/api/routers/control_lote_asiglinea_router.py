@@ -1,4 +1,5 @@
 import logging
+from typing import Dict, Any
 
 from fastapi import APIRouter, status
 from fastapi.params import Depends
@@ -12,19 +13,24 @@ from src.modules.administracion_service.src.infrastructure.db.repositories.contr
     ControlLoteAsiglineaRepository
 from src.modules.administracion_service.src.infrastructure.db.repositories.tipo_limpieza_repository import \
     TipoLimpiezaRepository
+from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.shared.base import get_db
+from src.shared.common.auditoria import get_audit_use_case
 from src.shared.common.responses import success_response, error_response
 from src.shared.exceptions import RepositoryError
+from src.shared.security import get_current_user_data
 
 router = APIRouter()
 
 
 def get_control_lote_asiglinea_use_case(
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        audit_uc: AuditUseCase = Depends(get_audit_use_case)
 ) -> ControlLoteAsiglineaUseCase:
     return ControlLoteAsiglineaUseCase(
         control_lote_asiglinea_repository=ControlLoteAsiglineaRepository(db),
-        tipo_limpieza_repository=TipoLimpiezaRepository(db)
+        tipo_limpieza_repository=TipoLimpiezaRepository(db),
+        audit_use_case=audit_uc
     )
 
 
@@ -81,9 +87,10 @@ def get_all_lote_asiglineas(
 def update_lote_asiglinea(
         lote_id: int,
         data: ControlLoteAsiglineaUpdate,
-        use_case: ControlLoteAsiglineaUseCase = Depends(get_control_lote_asiglinea_use_case)
+        use_case: ControlLoteAsiglineaUseCase = Depends(get_control_lote_asiglinea_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
-    response = use_case.update_lote_asiglinea(data, lote_id)
+    response = use_case.update_lote_asiglinea(data, lote_id, user_data)
     return success_response(
         data=response,
         message="Lote actualizado"
@@ -93,10 +100,11 @@ def update_lote_asiglinea(
 @router.delete("/{lote_id}", status_code=status.HTTP_200_OK)
 def remove_lote(
         lote_id: int,
-        use_case: ControlLoteAsiglineaUseCase = Depends(get_control_lote_asiglinea_use_case)
+        use_case: ControlLoteAsiglineaUseCase = Depends(get_control_lote_asiglinea_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
     try:
-        use_case.remove_lote(lote_id)
+        use_case.remove_lote(lote_id, user_data)
         return success_response(
             data=f"lote con id {lote_id} eliminado",
             message="Lote eliminado correctamente"

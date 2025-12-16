@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from fastapi import APIRouter, status, Depends
 from sqlalchemy.orm import Session
 
@@ -8,15 +10,24 @@ from src.modules.administracion_service.src.infrastructure.api.schemas.planning_
 from src.modules.administracion_service.src.infrastructure.db.repositories.planning_turno_repository import (
     PlanningTurnoRepository
 )
+from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.shared.base import get_db
+from src.shared.common.auditoria import get_audit_use_case
 from src.shared.common.responses import success_response, error_response
 from src.shared.exceptions import RepositoryError
+from src.shared.security import get_current_user_data
 
 router = APIRouter()
 
 
-def get_use_case(db: Session = Depends(get_db)):
-    return PlanningTurnoUseCase(PlanningTurnoRepository(db))
+def get_use_case(
+        db: Session = Depends(get_db),
+        audit_uc: AuditUseCase = Depends(get_audit_use_case)
+) -> PlanningTurnoUseCase:
+    return PlanningTurnoUseCase(
+        planning_turno_repository=PlanningTurnoRepository(db),
+        audit_use_case=audit_uc
+    )
 
 
 @router.get("/{id}", response_model=PlanningTurnoResponse)
@@ -60,9 +71,10 @@ def get_paginated(
 @router.patch("/{id}", response_model=PlanningTurnoResponse)
 def update(
         id: int, data: PlanningTurnoUpdate,
-        use_case: PlanningTurnoUseCase = Depends(get_use_case)
+        use_case: PlanningTurnoUseCase = Depends(get_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
-    planning_turno = use_case.update(id, data)
+    planning_turno = use_case.update(id, data, user_data)
     return success_response(
         data=planning_turno,
         message="Registro actualizado"
@@ -72,9 +84,10 @@ def update(
 @router.delete("/{id}")
 def delete(
         id: int,
-        use_case: PlanningTurnoUseCase = Depends(get_use_case)
+        use_case: PlanningTurnoUseCase = Depends(get_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
 ):
-    use_case.remove(id)
+    use_case.remove(id, user_data)
     return success_response(
         data=f"Registro {id} eliminado",
         message="Registro eliminado"
