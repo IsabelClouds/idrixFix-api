@@ -1,6 +1,5 @@
 import logging
 from typing import Tuple, List, Optional
-
 from sqlalchemy import func, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -247,45 +246,43 @@ class LineasSalidaRepository(ILineasSalidaRepository):
 
     def agregar_panzas(self, items: list[dict]) -> list[LineasSalida]:
         try:
-            lineas_modificadas = []
+            linea_num = items[0]["linea_num"]
+            orm_model = self._get_orm_model(linea_num)
 
-            for item in items:
-                linea_id = item["linea_id"]
-                linea_num = item["linea_num"]
-                nuevo_peso = item["nuevo_peso"]
+            ids = [item["linea_id"] for item in items]
+            nuevos_pesos = {item["linea_id"]: item["nuevo_peso"] for item in items}
 
-                orm_model = self._get_orm_model(linea_num)
-                linea_orm = self.db.query(orm_model).get(linea_id)
+            registros = (
+                self.db.query(orm_model)
+                .filter(orm_model.id.in_(ids))
+                .all()
+            )
 
-                if linea_orm is None:
-                    raise NotFoundError(f"Registro con id={linea_id} no encontrado.")
+            if len(registros) != len(ids):
+                raise NotFoundError("Uno o más registros no existen.")
 
-                linea_orm.peso_kg = nuevo_peso
-
-                lineas_modificadas.append((orm_model, linea_orm))
+            for r in registros:
+                r.peso_kg = nuevos_pesos[r.id]
 
             self.db.commit()
 
-            salidas = []
-            for orm_model, linea_orm in lineas_modificadas:
-                self.db.refresh(linea_orm)
-                salidas.append(
-                    LineasSalida(
-                        id=linea_orm.id,
-                        fecha_p=linea_orm.fecha_p,
-                        fecha=linea_orm.fecha,
-                        peso_kg=linea_orm.peso_kg,
-                        codigo_bastidor=linea_orm.codigo_bastidor,
-                        p_lote=linea_orm.p_lote,
-                        codigo_parrilla=linea_orm.codigo_parrilla,
-                        codigo_obrero=linea_orm.codigo_obrero,
-                        guid=linea_orm.guid,
-                    )
+            return [
+                LineasSalida(
+                    id=r.id,
+                    fecha_p=r.fecha_p,
+                    fecha=r.fecha,
+                    peso_kg=r.peso_kg,
+                    codigo_bastidor=r.codigo_bastidor,
+                    p_lote=r.p_lote,
+                    codigo_parrilla=r.codigo_parrilla,
+                    codigo_obrero=r.codigo_obrero,
+                    guid=r.guid,
                 )
-
-            return salidas
+                for r in registros
+            ]
 
         except SQLAlchemyError as e:
             self.db.rollback()
             raise RepositoryError("Error al actualizar pesos.") from e
+
 
