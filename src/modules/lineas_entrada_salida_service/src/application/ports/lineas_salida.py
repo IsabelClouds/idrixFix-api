@@ -43,3 +43,11 @@ class ILineasSalidaRepository(ABC):
     @abstractmethod
     def count_by_filters(self, filters: LineasFilters, linea_num: int) -> int:
         pass
+
+    @abstractmethod
+    def update_lote(self, items: list[dict], lote:str) -> list[LineasSalida]:
+        pass
+
+    @abstractmethod
+    def update_lote_by_ids(self, linea_num: int, ids: list[int], lote: str) -> list[LineasSalida]:
+        pass

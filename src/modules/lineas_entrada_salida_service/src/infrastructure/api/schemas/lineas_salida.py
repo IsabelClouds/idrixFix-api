@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_shared import LineasFilters
@@ -35,3 +35,9 @@ class TaraIdRequest(BaseModel):
 
 class PanzaRequest(LineasFilters):
     peso_kg: float
+
+class UpdateLoteRequest(BaseModel):
+    ids: List[int] = Field(..., min_items=1)
+    lote: str
+
+

@@ -285,4 +285,83 @@ class LineasSalidaRepository(ILineasSalidaRepository):
             self.db.rollback()
             raise RepositoryError("Error al actualizar pesos.") from e
 
+    def update_lote(self, items: list[dict], lote:str) -> list[LineasSalida]:
+        try:
+            linea_num = items[0]["linea_num"]
+            orm_model = self._get_orm_model(linea_num)
 
+            ids = [item["linea_id"] for item in items]
+            nuevos_pesos = {item["linea_id"]: item["nuevo_peso"] for item in items}
+
+            registros = (
+                self.db.query(orm_model)
+                .filter(orm_model.id.in_(ids))
+                .all()
+            )
+
+            if len(registros) != len(ids):
+                raise NotFoundError("Uno o más registros no existen.")
+
+            for r in registros:
+                r.peso_kg = nuevos_pesos[r.id]
+
+            self.db.commit()
+
+            return [
+                LineasSalida(
+                    id=r.id,
+                    fecha_p=r.fecha_p,
+                    fecha=r.fecha,
+                    peso_kg=r.peso_kg,
+                    codigo_bastidor=r.codigo_bastidor,
+                    p_lote=r.p_lote,
+                    codigo_parrilla=r.codigo_parrilla,
+                    codigo_obrero=r.codigo_obrero,
+                    guid=r.guid,
+                )
+                for r in registros
+            ]
+
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise RepositoryError("Error al actualizar pesos.") from e
+
+    def update_lote_by_ids(self, linea_num: int, ids: list[int], lote: str) -> list[LineasSalida]:
+        orm_model = self._get_orm_model(linea_num)
+
+        try:
+            registros = (
+                self.db.query(orm_model)
+                .filter(orm_model.id.in_(ids))
+                .all()
+            )
+
+            if not registros:
+                raise NotFoundError("No se encontraron registros para actualizar el lote.")
+
+            if len(registros) != len(ids):
+                raise NotFoundError("Uno o más registros no existen.")
+
+            for r in registros:
+                r.p_lote = lote
+
+            self.db.commit()
+
+            return [
+                LineasSalida(
+                    id=r.id,
+                    fecha_p=r.fecha_p,
+                    fecha=r.fecha,
+                    peso_kg=r.peso_kg,
+                    codigo_bastidor=r.codigo_bastidor,
+                    p_lote=r.p_lote,
+                    codigo_parrilla=r.codigo_parrilla,
+                    codigo_obrero=r.codigo_obrero,
+                    guid=r.guid,
+                )
+                for r in registros
+            ]
+
+        except Exception as e:
+            self.db.rollback()
+            raise RepositoryError("Error al actualizar el lote.") from e

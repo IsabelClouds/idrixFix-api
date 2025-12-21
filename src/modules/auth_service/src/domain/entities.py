@@ -28,6 +28,7 @@ class ModuloEnum(Enum):
     LINEAS_OPERARIOS = "LINEAS_OPERARIOS"
     PLANIFICACION_TURNO = "PLANIFICACION_TURNO"
     DETALLE_PRODUCCION = "DETALLE_PRODUCCION"
+    CONTROL_LOTE_SALIDAS = "CONTROL_LOTE_SALIDAS"
 
 class PermisoEnum(Enum):
     """Enum para los tipos de permisos"""

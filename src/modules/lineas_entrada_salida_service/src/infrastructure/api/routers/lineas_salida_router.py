@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.modules.lineas_entrada_salida_service.src.application.use_cases.lineas_salida_use_case import LineasSalidaUseCase
-from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import TaraIdRequest, PanzaRequest
+from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import TaraIdRequest, \
+    PanzaRequest, UpdateLoteRequest
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_shared import LineasPagination, \
     UpdateCodigoParrillaRequest, LineasFilters
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import LineasSalidaResponse, \
@@ -212,3 +213,29 @@ def agregar_panza(
         data=f"Se actualizaron {updated_items} registros",
         message="Panza agregada correctamente a los registros"
     )
+
+@router.put("/{linea_num}/update_lote", status_code=status.HTTP_200_OK)
+def update_lote_batch(
+    linea_num: int,
+    data: UpdateLoteRequest,
+    use_case: LineasSalidaUseCase = Depends(get_lineas_salida_use_case),
+    user_data: Dict[str, Any] = Depends(get_current_user_data)
+):
+    try:
+        updated_count = use_case.update_lote_batch(
+            linea_num=linea_num,
+            ids=data.ids,
+            lote=data.lote,
+            user_data=user_data
+        )
+
+        return success_response(
+            data=f"Se actualizaron {updated_count} registros",
+            message="Lote actualizado correctamente"
+        )
+
+    except NotFoundError as e:
+        return error_response(str(e), status.HTTP_404_NOT_FOUND)
+    except RepositoryError as e:
+        return error_response(str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
+

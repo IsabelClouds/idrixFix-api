@@ -195,4 +195,39 @@ class LineasSalidaUseCase:
 
         return len(lineas_actualizadas)
 
+    def update_lote_batch(self, linea_num: int, ids: list[int], lote: str, user_data: Dict[str, Any]) -> int:
 
+        if not lote:
+            raise ValidationError("El lote no puede estar vacío.")
+
+        lineas_anteriores = {
+            l.id: LineasSalidaResponse.model_validate(l).model_dump(mode="json")
+            for l in self.lineas_salida_repository.get_all_by_filters(
+                LineasFilters(),
+                linea_num
+            )
+            if l.id in ids
+        }
+
+        updated = self.lineas_salida_repository.update_lote_by_ids(
+            linea_num=linea_num,
+            ids=ids,
+            lote=lote
+        )
+
+        logs = []
+        for linea in updated:
+            logs.append({
+                "accion": "UPDATE",
+                "modelo": self._modelo_auditoria(linea_num),
+                "entidad_id": linea.id,
+                "datos_nuevos": LineasSalidaResponse.model_validate(linea).model_dump(mode="json"),
+                "datos_anteriores": lineas_anteriores.get(linea.id)
+            })
+
+        self.audit_use_case.log_actions_batch(
+            logs=logs,
+            user_id=user_data.get("user_id")
+        )
+
+        return len(updated)
