@@ -8,7 +8,7 @@ services:
     user: root
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${AUTH_DB_PASSWORD} # Usará la contraseña de tu .env
+      - MSSQL_SA_PASSWORD=${AUTH_DB_PASSWORD}
       - MSSQL_PID=Express
     ports:
       - "1433:1433"
