@@ -48,9 +48,12 @@ class MigaResponse(BaseModel):
     p_miga: float
     porcentaje: float
 
+    class Config:
+        from_attributes = True
+
 class MigaRequest(BaseModel):
     linea_id: int
-    tara_id: int
+    tara_id: Optional[int]
     p_miga: float
 
 class LineasSalidaMigaResponse(LineasSalidaResponse):

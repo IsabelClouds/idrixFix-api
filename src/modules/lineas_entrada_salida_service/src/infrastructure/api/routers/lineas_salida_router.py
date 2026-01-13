@@ -313,4 +313,3 @@ def get_all_lineas_salida_with_miga(
         return error_response(
             message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
