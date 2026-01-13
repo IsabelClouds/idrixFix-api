@@ -176,3 +176,29 @@ class UsuarioUseCase:
         update_data = UsuarioUpdate(password_hash=password_hash)
         result = self.usuario_repository.update(usuario_id, update_data)
         return result is not None
+
+    def update_password(self, usuario_id: int, new_password: str) -> bool:
+        """Cambia la contraseña de un usuario"""
+        usuario = self.usuario_repository.get_by_id(usuario_id)
+        if not usuario:
+            raise NotFoundError(f"Usuario con id={usuario_id} no encontrado.")
+
+        # Validar nueva contraseña
+        try:
+            new_password_obj = Password(new_password)
+            password_hash = new_password_obj.hash()
+        except ValueError as e:
+            raise ValidationError(str(e))
+
+        # Actualizar contraseña
+        update_data = UsuarioUpdate(password_hash=password_hash)
+        result = self.usuario_repository.update(usuario_id, update_data)
+
+        self.audit_use_case.log_action(
+            accion="UPDATE",
+            user_id=usuario_id,
+            modelo="usuarios",
+            entidad_id=usuario_id,
+        )
+
+        return result is not None

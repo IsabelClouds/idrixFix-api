@@ -122,3 +122,6 @@ class ChangePasswordRequest(BaseModel):
                 "new_password": "NewPassword123!"
             }
         }
+
+class UpdatePasswordRequest(BaseModel):
+    new_password: str = Field(..., min_length=8)

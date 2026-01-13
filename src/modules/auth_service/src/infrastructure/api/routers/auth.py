@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
+from src.shared.common.auditoria import get_audit_use_case
 from src.modules.auth_service.src.application.use_cases.auth_use_cases import AuthUseCase
 from src.modules.auth_service.src.infrastructure.api.schemas.auth import (
     LoginRequest,
@@ -9,7 +12,7 @@ from src.modules.auth_service.src.infrastructure.api.schemas.auth import (
     RefreshTokenRequest,
     RefreshTokenResponse,
     LogoutRequest,
-    ChangePasswordRequest,
+    ChangePasswordRequest, UpdatePasswordRequest,
 )
 from src.modules.auth_service.src.infrastructure.db.repositories.usuario_repository import UsuarioRepository
 from src.modules.auth_service.src.infrastructure.db.repositories.rol_repository import RolRepository
@@ -34,11 +37,12 @@ def get_auth_use_case(db: Session = Depends(get_auth_db)) -> AuthUseCase:
     )
 
 
-def get_usuario_use_case(db: Session = Depends(get_auth_db)) -> UsuarioUseCase:
+def get_usuario_use_case(db: Session = Depends(get_auth_db), audit_uc: AuditUseCase = Depends(get_audit_use_case)) -> UsuarioUseCase:
     """Dependency para obtener el caso de uso de usuarios"""
     return UsuarioUseCase(
         usuario_repository=UsuarioRepository(db),
         rol_repository=RolRepository(db),
+        audit_use_case=audit_uc
     )
 
 
@@ -185,4 +189,27 @@ def get_current_user(
     return success_response(
         data=TokenVerifyResponse.model_validate(user_info).model_dump(mode="json"),
         message="Información del usuario obtenida"
+    )
+
+
+@router.put("/{usuario_id}/update-password", status_code=status.HTTP_200_OK)
+def change_password(
+        usuario_id: int,
+        password_data: UpdatePasswordRequest,
+        usuario_use_case: UsuarioUseCase = Depends(get_usuario_use_case)
+):
+    """Endpoint para cambiar contraseña"""
+    success = usuario_use_case.update_password(
+        usuario_id,
+        password_data.new_password
+    )
+
+    if not success:
+        return error_response(
+            message="Error al cambiar contraseña",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+    return success_response(
+        data={"password_changed": True},
+        message="Contraseña cambiada exitosamente"
     )
