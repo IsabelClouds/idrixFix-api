@@ -1,12 +1,15 @@
 from typing import Dict, Any
+import logging
 
 from fastapi import APIRouter, Depends, status, Path
 from sqlalchemy.orm import Session
 
+from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import LineasSalidaMigaResponse
+from src.modules.lineas_entrada_salida_service.src.infrastructure.db.repositories.control_miga import ControlMigaRepository
 from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.modules.lineas_entrada_salida_service.src.application.use_cases.lineas_salida_use_case import LineasSalidaUseCase
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import TaraIdRequest, \
-    PanzaRequest, UpdateLoteRequest
+    PanzaRequest, UpdateLoteRequest, MigaRequest
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_shared import LineasPagination, \
     UpdateCodigoParrillaRequest, LineasFilters
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import LineasSalidaResponse, \
@@ -31,6 +34,7 @@ def get_lineas_salida_use_case(
     return LineasSalidaUseCase(
         lineas_salida_repository=LineasSalidaRepository(db_externa),
         control_tara_repository=ControlTaraRepository(db_auth),
+        control_miga_repository=ControlMigaRepository(db_auth),
         audit_use_case=audit_uc
     )
 
@@ -238,4 +242,75 @@ def update_lote_batch(
         return error_response(str(e), status.HTTP_404_NOT_FOUND)
     except RepositoryError as e:
         return error_response(str(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@router.post("/{linea_num}/miga", response_model=LineasSalidaMigaResponse, status_code=status.HTTP_200_OK)
+def create_miga(
+        linea_num: int,
+        data: MigaRequest,
+        use_case: LineasSalidaUseCase = Depends(get_lineas_salida_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
+):
+    created_miga = use_case.create_miga(
+        linea_num=linea_num,
+        data=data,
+        user_data=user_data
+    )
+
+    return success_response(
+        data=LineasSalidaMigaResponse.model_validate(created_miga).model_dump(mode="json"),
+        message="Miga agregada correctamente"
+    )
+
+@router.put("/{linea_num}/miga", response_model=LineasSalidaMigaResponse, status_code=status.HTTP_200_OK)
+def update_miga(
+        linea_num: int,
+        data: MigaRequest,
+        use_case: LineasSalidaUseCase = Depends(get_lineas_salida_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
+):
+    updated_miga = use_case.update_miga(
+        linea_num=linea_num,
+        data=data,
+        user_data=user_data
+    )
+
+    return success_response(
+        data=LineasSalidaMigaResponse.model_validate(updated_miga).model_dump(mode="json"),
+        message=f"Miga actualizada correctamente"
+    )
+
+@router.post("/{linea_num}/miga/paginated", status_code=status.HTTP_200_OK)
+def get_all_lineas_salida_with_miga(
+        pagination_params: LineasPagination,
+        linea_num: int = Path(..., ge=1, le=6, description="Número de Línea (1 al 6)"),
+        use_case: LineasSalidaUseCase = Depends(get_lineas_salida_use_case)
+):
+    try:
+        pagination_result = use_case.get_lineas_salida_miga_paginated_by_filters(
+            filters=pagination_params,
+            linea_num=linea_num
+        )
+
+        response_data = [
+            LineasSalidaMigaResponse.model_validate(d).model_dump(mode="json")
+            for d in pagination_result["data"]
+        ]
+
+        response_data_with_meta = {
+            "total_records": pagination_result["total_records"],
+            "total_pages": pagination_result["total_pages"],
+            "page": pagination_result["page"],
+            "page_size": pagination_result["page_size"],
+            "data": response_data,
+        }
+
+        return success_response(
+            data=response_data_with_meta,
+            message=f"Producción de Linea Salida {linea_num} obten idas",
+        )
+
+    except RepositoryError as e:
+        return error_response(
+            message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 

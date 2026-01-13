@@ -34,3 +34,11 @@ class ControlTara:
     descripcion: Optional[str]
     peso_kg: float
     is_active: bool
+
+@dataclass
+class ControlMiga:
+    id: int
+    linea: int
+    registro: int
+    p_miga: float
+    porcentaje: float

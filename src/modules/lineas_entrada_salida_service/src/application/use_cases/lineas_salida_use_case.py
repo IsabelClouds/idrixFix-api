@@ -1,7 +1,11 @@
 from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
 from typing import Optional, Dict, Any, List
+import logging
 
+from src.modules.lineas_entrada_salida_service.src.application.ports.control_miga import IControlMigaRepository
+from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import \
+    LineasSalidaMigaResponse, MigaResponse, LineasSalidaMigaPaginatedResponse, MigaRequest
 from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.modules.lineas_entrada_salida_service.src.application.ports.control_tara import IControlTaraRepository
 from src.modules.lineas_entrada_salida_service.src.application.ports.lineas_salida import ILineasSalidaRepository
@@ -15,10 +19,11 @@ from src.shared.exceptions import NotFoundError, ValidationError
 
 class LineasSalidaUseCase:
     def __init__(self, lineas_salida_repository: ILineasSalidaRepository,
-                 control_tara_repository: IControlTaraRepository, audit_use_case: AuditUseCase):
+                 control_tara_repository: IControlTaraRepository, audit_use_case: AuditUseCase, control_miga_repository: IControlMigaRepository):
         self.lineas_salida_repository = lineas_salida_repository
         self.control_tara_repository = control_tara_repository
         self.audit_use_case = audit_use_case
+        self.control_miga_repository = control_miga_repository
 
     def _numero_en_letras(self, numero: int) -> str:
         mapping = {
@@ -51,6 +56,53 @@ class LineasSalidaUseCase:
             "page": filters.page,
             "page_size": filters.page_size,
             "data": data
+        }
+
+    def get_lineas_salida_miga_paginated_by_filters(
+            self,
+            filters: LineasPagination,
+            linea_num: int
+    ) -> LineasSalidaMigaPaginatedResponse:
+
+        lineas, total_records = self.lineas_salida_repository.get_paginated_by_filters(
+            filters=filters,
+            page=filters.page,
+            page_size=filters.page_size,
+            linea_num=linea_num
+        )
+
+        total_pages = ceil(total_records / filters.page_size) if total_records > 0 else 0
+
+        data_response: list[LineasSalidaMigaResponse] = []
+
+        for linea in lineas:
+            miga = self.control_miga_repository.get_by_registro(
+                linea_num=linea_num,
+                registro=linea.id
+            )
+
+            data_response.append(
+                LineasSalidaMigaResponse(
+                    id=linea.id,
+                    fecha_p=linea.fecha_p,
+                    fecha=linea.fecha,
+                    peso_kg=linea.peso_kg,
+                    codigo_bastidor=linea.codigo_bastidor,
+                    p_lote=linea.p_lote,
+                    codigo_parrilla=linea.codigo_parrilla,
+                    codigo_obrero=linea.codigo_obrero,
+                    guid=linea.guid,
+                    p_miga=miga.p_miga if miga else 0.0,
+                    porcentaje=miga.porcentaje if miga else 0.0
+                )
+            )
+
+        return {
+            "total_records": total_records,
+            "total_pages": total_pages,
+            "page": filters.page,
+            "page_size": filters.page_size,
+            "data": data_response
         }
 
     def get_linea_salida_by_id(self, linea_id: int, linea_num: int) -> Optional[LineasSalida]:
@@ -217,6 +269,7 @@ class LineasSalidaUseCase:
 
         logs = []
         for linea in updated:
+
             logs.append({
                 "accion": "UPDATE",
                 "modelo": self._modelo_auditoria(linea_num),
@@ -231,3 +284,154 @@ class LineasSalidaUseCase:
         )
 
         return len(updated)
+
+    def create_miga(self, linea_num: int, data: MigaRequest, user_data: Dict[str, Any]) -> LineasSalidaMigaResponse:
+        if data is None:
+            raise ValidationError("Los datos de la miga no pueden estar vacios")
+
+        if data.p_miga is None:
+            raise ValidationError("El campo p_miga no puede ser nulo")
+
+        if data.linea_id is None:
+            raise ValidationError("El campo linea_id no puede ser nulo")
+
+        miga = self.control_miga_repository.get_by_registro(linea_num, data.linea_id)
+
+        if miga:
+            raise ValidationError("La miga ya existe")
+
+        linea_registro = self.lineas_salida_repository.get_by_id(data.linea_id,linea_num)
+
+        if linea_registro is None:
+            raise NotFoundError("La línea de salida no existe")
+
+        if data.tara_id is not None:
+            tara = self.control_tara_repository.get_by_id(data.tara_id)
+            if tara is not None:
+                porcentaje = round(
+                    ((linea_registro.peso_kg - tara.peso_kg) -
+                     (data.p_miga - tara.peso_kg)) / linea_registro.peso_kg,
+                    3
+                )
+            else:
+                raise NotFoundError("La tara no existe")
+        else:
+            porcentaje = round(
+                (linea_registro.peso_kg - data.p_miga) / linea_registro.peso_kg,
+                3
+            )
+
+        nueva_miga = self.control_miga_repository.create(linea_num, data.linea_id, data.p_miga, porcentaje)
+
+        miga_response = MigaResponse(
+            id = nueva_miga.id,
+            linea = nueva_miga.linea,
+            registro = nueva_miga.registro,
+            p_miga = nueva_miga.p_miga,
+            porcentaje = nueva_miga.porcentaje,
+        )
+
+        self.audit_use_case.log_action(
+            accion="CREATE",
+            user_id=user_data.get("user_id"),
+            modelo="control_miga",
+            entidad_id=nueva_miga.id,
+            datos_nuevos=MigaResponse.model_validate(miga_response).model_dump(mode="json")
+        )
+
+        response = LineasSalidaMigaResponse(
+            id = linea_registro.id,
+            fecha_p = linea_registro.fecha_p,
+            fecha = linea_registro.fecha,
+            peso_kg = linea_registro.peso_kg,
+            codigo_bastidor = linea_registro.codigo_bastidor,
+            p_lote = linea_registro.p_lote,
+            codigo_parrilla = linea_registro.codigo_parrilla,
+            codigo_obrero = linea_registro.codigo_obrero,
+            guid = linea_registro.guid,
+            p_miga = nueva_miga.p_miga,
+            porcentaje = nueva_miga.porcentaje,
+        )
+
+        return response
+
+    def update_miga(self, linea_num: int, data: MigaRequest, user_data: Dict[str, Any]) -> LineasSalidaMigaResponse:
+        if data is None:
+            raise ValidationError("Los datos de la miga no pueden estar vacios")
+
+        if data.p_miga is None:
+            raise ValidationError("El campo p_miga no puede ser nulo")
+
+        if data.linea_id is None:
+            raise ValidationError("El campo linea_id no puede ser nulo")
+
+        miga = self.control_miga_repository.get_by_registro(linea_num, data.linea_id)
+
+        if miga is None:
+            raise NotFoundError("La miga no existe")
+
+        linea_registro = self.lineas_salida_repository.get_by_id(data.linea_id, linea_num)
+
+        if linea_registro is None:
+            raise NotFoundError("La línea de salida no existe")
+
+        if data.tara_id is not None:
+            tara = self.control_tara_repository.get_by_id(data.tara_id)
+            if tara is not None:
+                porcentaje = round(
+                    ((linea_registro.peso_kg - tara.peso_kg) -
+                     (data.p_miga - tara.peso_kg)) / linea_registro.peso_kg,
+                    3
+                )
+            else:
+                raise NotFoundError("La tara no existe")
+        else:
+            porcentaje = round(
+                (linea_registro.peso_kg - data.p_miga) / linea_registro.peso_kg,
+                3
+            )
+
+        miga_actualizada = self.control_miga_repository.update(miga.id, data.p_miga, porcentaje)
+
+        miga_actualizada = MigaResponse(
+            id = miga_actualizada.id,
+            linea = miga_actualizada.linea,
+            registro = miga_actualizada.registro,
+            p_miga = miga_actualizada.p_miga,
+            porcentaje = miga_actualizada.porcentaje,
+        )
+
+        miga_anterior = MigaResponse(
+            id = miga.id,
+            linea = miga.linea,
+            registro = miga.registro,
+            p_miga = miga.p_miga,
+            porcentaje = miga.porcentaje,
+        )
+
+        self.audit_use_case.log_action(
+            accion="UPDATE",
+            user_id=user_data.get("user_id"),
+            modelo="control_miga",
+            entidad_id=miga.id,
+            datos_nuevos=MigaResponse.model_validate(miga_actualizada).model_dump(mode="json"),
+            datos_anteriores=MigaResponse.model_validate(miga_anterior).model_dump(mode="json"),
+        )
+
+        response = LineasSalidaMigaResponse(
+            id = linea_registro.id,
+            fecha_p = linea_registro.fecha_p,
+            fecha = linea_registro.fecha,
+            peso_kg = linea_registro.peso_kg,
+            codigo_bastidor = linea_registro.codigo_bastidor,
+            p_lote = linea_registro.p_lote,
+            codigo_parrilla = linea_registro.codigo_parrilla,
+            codigo_obrero = linea_registro.codigo_obrero,
+            guid = linea_registro.guid,
+            p_miga = miga_actualizada.p_miga,
+            porcentaje = miga_actualizada.porcentaje,
+        )
+
+        return response
+
+

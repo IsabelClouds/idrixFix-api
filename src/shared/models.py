@@ -16,7 +16,7 @@ from src.modules.auth_service.src.infrastructure.db.models import (
 )
 
 #Modelo de Control Tara
-from src.modules.lineas_entrada_salida_service.src.infrastructure.db.models import ControlTaraOrm
+from src.modules.lineas_entrada_salida_service.src.infrastructure.db.models import ControlTaraOrm, ControlMigaOrm
 
 # Este archivo solo importa para registrar los modelos
 # Los microservicios NO deben importar desde aquí

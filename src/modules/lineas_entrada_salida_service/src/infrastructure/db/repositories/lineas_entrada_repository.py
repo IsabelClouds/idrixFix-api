@@ -1,4 +1,3 @@
-import logging
 from typing import List, Tuple, Optional
 
 from sqlalchemy.exc import SQLAlchemyError
