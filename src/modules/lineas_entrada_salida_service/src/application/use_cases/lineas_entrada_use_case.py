@@ -1,13 +1,16 @@
 from math import ceil
+
+from _decimal import Decimal, ROUND_HALF_UP
 from typing import Optional, Dict, Any
 
+from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import PanzaRequest
 from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.modules.lineas_entrada_salida_service.src.application.ports.lineas_entrada import ILineasEntradaRepository
 from src.modules.lineas_entrada_salida_service.src.domain.entities import LineasEntrada
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_entrada import \
     LineasEntradaPaginatedResponse, LineasEntradaUpdate, LineasEntradaResponse
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_shared import \
-    LineasPagination
+    LineasPagination, LineasFilters
 from src.shared.exceptions import NotFoundError, ValidationError
 
 
@@ -97,3 +100,56 @@ class LineasEntradaUseCase:
             datos_anteriores=LineasEntradaResponse.model_validate(linea).model_dump(mode="json")
         )
         return updated
+
+    def agregar_panza(self, linea_num: int, data: PanzaRequest, user_data: Dict[str, Any]) -> int:
+        if data.peso_kg <= 0:
+            raise ValidationError("El peso debe ser mayor que cero.")
+
+        # Obtener registros
+        lineas = self.lineas_entrada_repository.get_all_by_filters(
+            filters=LineasFilters(fecha=data.fecha, lote=data.lote),
+            linea_num=linea_num
+        )
+        if not lineas:
+            raise NotFoundError("No se encontraron registros con los filtros proporcionados.")
+
+        peso_panza_dec = Decimal(str(data.peso_kg))
+
+        items_para_actualizar = []
+        datos_anteriores = {}
+
+        for linea in lineas:
+            peso_dec = Decimal(str(linea.peso_kg))
+            nuevo_peso = float(
+                (peso_dec + peso_panza_dec).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+            )
+
+            datos_anteriores[linea.id] = LineasEntradaResponse.model_validate(linea).model_dump(mode="json")
+
+            items_para_actualizar.append({
+                "linea_id": linea.id,
+                "linea_num": linea_num,
+                "nuevo_peso": nuevo_peso
+            })
+
+        lineas_actualizadas = self.lineas_entrada_repository.agregar_panzas(items_para_actualizar)
+
+        logs_batch = []
+        for updated_linea in lineas_actualizadas:
+            logs_batch.append({
+                "accion": "UPDATE",
+                "modelo": self._modelo_auditoria(linea_num),
+                "entidad_id": updated_linea.id,
+                "datos_nuevos": LineasEntradaResponse.model_validate(updated_linea).model_dump(mode="json"),
+                "datos_anteriores": datos_anteriores.get(updated_linea.id)
+            })
+
+        self.audit_use_case.log_actions_batch(
+            logs=logs_batch,
+            user_id=user_data.get("user_id")
+        )
+
+        return len(lineas_actualizadas)
+
+    def count_lineas_entrada(self, filters: LineasFilters, linea_num: int) -> int:
+        return self.lineas_entrada_repository.count_by_filters(filters, linea_num)

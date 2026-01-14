@@ -3,12 +3,14 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends, status, Path
 from sqlalchemy.orm import Session
 
+from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_salida import PanzaRequest
 from src.modules.auth_service.src.application.use_cases.audit_use_case import AuditUseCase
 from src.modules.lineas_entrada_salida_service.src.application.use_cases.lineas_entrada_use_case import \
     LineasEntradaUseCase
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_entrada import \
     LineasEntradaResponse, LineasEntradaUpdate
-from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_shared import LineasPagination, UpdateCodigoParrillaRequest
+from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.lineas_shared import LineasPagination, \
+    UpdateCodigoParrillaRequest, LineasFilters
 from src.modules.lineas_entrada_salida_service.src.infrastructure.db.repositories.lineas_entrada_repository import \
     LineasEntradaRepository
 from src.shared.base import get_db
@@ -145,6 +147,40 @@ def update_codigo_parrilla(
     except NotFoundError as e:
         return error_response(
             message=str(e), status_code=status.HTTP_404_NOT_FOUND
+        )
+    except RepositoryError as e:
+        return error_response(
+            message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@router.put("/{linea_num}/agregar_panza", status_code=status.HTTP_200_OK)
+def agregar_panza(
+        linea_num: int,
+        data: PanzaRequest,
+        use_case: LineasEntradaUseCase = Depends(get_lineas_entrada_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
+):
+    updated_items = use_case.agregar_panza(
+        linea_num=linea_num,
+        data=data,
+        user_data=user_data
+    )
+    return success_response(
+        data=f"Se actualizaron {updated_items} registros",
+        message="Panza agregada correctamente a los registros"
+    )
+
+@router.post("/{linea_num}/total", status_code=status.HTTP_200_OK)
+def get_total_lineas_entrada_by_filters(
+        linea_num: int,
+        filters: LineasFilters,
+        use_case: LineasEntradaUseCase = Depends(get_lineas_entrada_use_case)
+):
+    try:
+        total_records = use_case.count_lineas_entrada(filters, linea_num)
+        return success_response(
+            data=total_records,
+            message=f"Total de produccion de la linea {linea_num} entrada obtenida correctamente"
         )
     except RepositoryError as e:
         return error_response(

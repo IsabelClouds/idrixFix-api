@@ -36,9 +36,10 @@ class LineasEntradaRepository(ILineasEntradaRepository):
         conditions = []
 
         if filters.fecha:
-            conditions.append(
-                orm_model.fecha_p == filters.fecha
-            )
+            conditions.append(orm_model.fecha_p == filters.fecha)
+
+        if filters.lote:
+            conditions.append(orm_model.p_lote == filters.lote)
 
         if conditions:
             query = query.filter(and_(*conditions))
@@ -122,6 +123,37 @@ class LineasEntradaRepository(ILineasEntradaRepository):
             logging.error(f"FALLO DE DB DETALLADO: {e}")
             raise RepositoryError("Error al obtener todas las líneas entrada.") from e
 
+    def get_all_by_filters(self, filters: LineasFilters, linea_num: int) -> List[LineasEntrada]:
+        orm_model = self._get_orm_model(linea_num)
+
+        try:
+            query = self.db.query(orm_model)
+            query = self._apply_filters(query, filters, orm_model)
+
+            query = query.order_by(orm_model.fecha_p.desc())
+
+            lineas_orm = query.all()
+
+            domain_entities = [
+                LineasEntrada(
+                    id=linea.id,
+                    fecha_p=linea.fecha_p,
+                    fecha=linea.fecha,
+                    peso_kg=linea.peso_kg,
+                    turno=linea.turno,
+                    codigo_secuencia=linea.codigo_secuencia,
+                    codigo_parrilla=linea.codigo_parrilla,
+                    p_lote=linea.p_lote,
+                    hora_inicio=linea.hora_inicio,
+                    guid=linea.guid
+                )
+                for linea in lineas_orm
+            ]
+            return domain_entities
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise RepositoryError("Error al obtener registros filtrados.") from e
+
     def update(self, linea_id: int, linea_entrada_data: LineasEntradaUpdate, linea_num: int) -> Optional[LineasEntrada]:
         orm_model = self.db.query(self._get_orm_model(linea_num)).get(linea_id)
         if not orm_model:
@@ -189,3 +221,45 @@ class LineasEntradaRepository(ILineasEntradaRepository):
         except SQLAlchemyError as e:
             self.db.rollback()
             raise RepositoryError("Error al actualizar el código de parrilla de la línea entrada.") from e
+
+    def agregar_panzas(self, items: list[dict]) -> list[LineasEntrada]:
+        try:
+            linea_num = items[0]["linea_num"]
+            orm_model = self._get_orm_model(linea_num)
+
+            ids = [item["linea_id"] for item in items]
+            nuevos_pesos = {item["linea_id"]: item["nuevo_peso"] for item in items}
+
+            registros = (
+                self.db.query(orm_model)
+                .filter(orm_model.id.in_(ids))
+                .all()
+            )
+
+            if len(registros) != len(ids):
+                raise NotFoundError("Uno o más registros no existen.")
+
+            for r in registros:
+                r.peso_kg = nuevos_pesos[r.id]
+
+            self.db.commit()
+
+            return [
+                LineasEntrada(
+                    id=r.id,
+                    fecha_p=r.fecha_p,
+                    fecha=r.fecha,
+                    peso_kg=r.peso_kg,
+                    turno=r.turno,
+                    codigo_secuencia=r.codigo_secuencia,
+                    codigo_parrilla=r.codigo_parrilla,
+                    p_lote=r.p_lote,
+                    hora_inicio=r.hora_inicio,
+                    guid=r.guid
+                )
+                for r in registros
+            ]
+
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise RepositoryError("Error al actualizar pesos.") from e

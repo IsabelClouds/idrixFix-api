@@ -194,7 +194,7 @@ def get_total_lineas_salida_by_filters(
         total_records = use_case.count_lineas_salida(filters, linea_num)
         return success_response(
             data=total_records,
-            message=f"Total de produccion de la linea ${linea_num} salida obtenida correctamente"
+            message=f"Total de produccion de la linea {linea_num} salida obtenida correctamente"
         )
     except RepositoryError as e:
         return error_response(

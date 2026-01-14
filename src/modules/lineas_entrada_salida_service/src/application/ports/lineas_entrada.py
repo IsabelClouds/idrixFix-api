@@ -27,3 +27,11 @@ class ILineasEntradaRepository(ABC):
     @abstractmethod
     def update_codigo_parrilla(self, linea_id: int, linea_num: int, valor_parrilla: str, valor_secuencia: str) -> Optional[LineasEntrada]:
         pass
+
+    @abstractmethod
+    def agregar_panzas(self, items: list[dict]) -> list[LineasEntrada]:
+        pass
+
+    @abstractmethod
+    def get_all_by_filters(self, filters: LineasFilters, linea_num: int) -> List[LineasEntrada]:
+        pass
