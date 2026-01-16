@@ -29,3 +29,11 @@ class IControlTaraRepository(ABC):
     @abstractmethod
     def exists_by_nombre(self, nombre: str) -> bool:
         pass
+
+    @abstractmethod
+    def get_principal(self) -> Optional[ControlTara]:
+        pass
+
+    @abstractmethod
+    def set_principal(self, tara_id, principal: bool):
+        pass

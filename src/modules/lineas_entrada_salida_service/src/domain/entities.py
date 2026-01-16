@@ -34,6 +34,7 @@ class ControlTara:
     descripcion: Optional[str]
     peso_kg: float
     is_active: bool
+    is_principal: bool
 
 @dataclass
 class ControlMiga:

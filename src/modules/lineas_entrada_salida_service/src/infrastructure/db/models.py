@@ -175,6 +175,7 @@ class ControlTaraOrm(_BaseAuth):
     descripcion = Column(String(255))
     peso_kg = Column(Float, nullable=False)
     is_active = Column(Boolean, default=True)
+    is_principal = Column(Boolean, default=False, nullable=False)
 
 class ControlMigaOrm(_BaseAuth):
     __tablename__ = "control_miga"

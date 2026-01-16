@@ -48,3 +48,27 @@ class ControlTaraUseCase:
             datos_anteriores=datos_anteriores
         )
         return  self.control_tara_repository.soft_delete(tara_id)
+
+    def set_principal(self, tara_id: int, user_data: Dict[str, Any]) -> ControlTara:
+        tara = self.control_tara_repository.get_by_id(tara_id)
+
+        if tara is None:
+            raise AlreadyExistsError("La tarano existe")
+
+        principal = self.control_tara_repository.get_principal()
+
+        if principal is not None:
+            self.control_tara_repository.set_principal(principal.id, False)
+
+        updated_tara = self.control_tara_repository.set_principal(tara_id, True)
+
+        self.audit_use_case.log_action(
+            accion="UPDATE",
+            user_id=user_data.get("user_id"),
+            modelo="control_tara",
+            entidad_id=updated_tara.id,
+            datos_anteriores=TaraResponse.model_validate(tara).model_dump(mode="json"),
+            datos_nuevos=TaraResponse.model_validate(updated_tara).model_dump(mode="json")
+        )
+
+        return updated_tara

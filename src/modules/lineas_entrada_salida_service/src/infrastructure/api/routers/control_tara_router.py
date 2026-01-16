@@ -74,3 +74,15 @@ def soft_delete_tara(
         data=use_case.soft_delete(tara_id, user_data),
         message=f"Tara con id {tara_id} eliminada con exito"
     )
+
+@router.patch("/{tara_id}/principal", status_code=status.HTTP_200_OK)
+def set_principal(
+        tara_id: int,
+        use_case: ControlTaraUseCase = Depends(get_tara_use_case),
+        user_data: Dict[str, Any] = Depends(get_current_user_data)
+):
+    updated_tara = use_case.set_principal(tara_id, user_data)
+    return success_response(
+        data=TaraResponse.model_validate(updated_tara).model_dump(mode="json"),
+        message=f"Se ha establecido {updated_tara.nombre} como principal"
+    )
