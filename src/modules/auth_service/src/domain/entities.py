@@ -30,6 +30,7 @@ class ModuloEnum(Enum):
     PLANIFICACION_TURNO = "PLANIFICACION_TURNO"
     DETALLE_PRODUCCION = "DETALLE_PRODUCCION"
     CONTROL_LOTE_SALIDAS = "CONTROL_LOTE_SALIDAS"
+    CONTROL_MIGA = "CONTROL_MIGA"
 
 class PermisoEnum(Enum):
     """Enum para los tipos de permisos"""
