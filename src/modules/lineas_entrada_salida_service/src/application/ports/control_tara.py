@@ -23,11 +23,7 @@ class IControlTaraRepository(ABC):
         pass
 
     @abstractmethod
-    def exists_by_peso_kg(self, peso_kg_tara: float) -> bool:
-        pass
-
-    @abstractmethod
-    def exists_by_nombre(self, nombre: str) -> bool:
+    def exists_by_nombre_and_peso_kg(self, nombre: str, peso_kg_tara: float) -> bool:
         pass
 
     @abstractmethod

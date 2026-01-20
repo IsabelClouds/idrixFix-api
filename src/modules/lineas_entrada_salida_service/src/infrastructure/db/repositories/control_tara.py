@@ -102,27 +102,14 @@ class ControlTaraRepository(IControlTaraRepository):
             self.db.rollback()
             raise RepositoryError("Error al eliminar la tara.") from e
 
-    def exists_by_peso_kg(self, peso_kg_tara: float) -> bool:
-        try:
-            tara_orm = (
-                self.db.query(ControlTaraOrm.id)
-                .filter(
-                    ControlTaraOrm.peso_kg == peso_kg_tara,
-                    ControlTaraOrm.is_active == True
-                )
-                .first()
-            )
-            return tara_orm is not None
-        except SQLAlchemyError as e:
-            raise RepositoryError("Error al consultar existencia de la tara.") from e
-
-    def exists_by_nombre(self, nombre: str) -> bool:
+    def exists_by_nombre_and_peso_kg(self, nombre: str, peso_kg: float) -> bool:
         try:
             tara_orm = (
                 self.db.query(ControlTaraOrm.id)
                 .filter(
                     ControlTaraOrm.nombre == nombre,
-                    ControlTaraOrm.is_active == True
+                    ControlTaraOrm.is_active == True,
+                    ControlTaraOrm.peso_kg == peso_kg
                 )
                 .first()
             )

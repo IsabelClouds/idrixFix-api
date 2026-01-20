@@ -13,9 +13,8 @@ class ControlTaraUseCase:
         self.audit_use_case = audit_use_case
 
     def create_tara(self, tara_data: TaraCreate, user_data: Dict[str, Any]) -> ControlTara:
-        exists_by_nombre = self.control_tara_repository.exists_by_nombre(tara_data.nombre)
-        exists_by_peso_kg = self.control_tara_repository.exists_by_peso_kg(tara_data.peso_kg)
-        if exists_by_nombre and exists_by_peso_kg:
+        exists = self.control_tara_repository.exists_by_nombre_and_peso_kg(tara_data.nombre, tara_data.peso_kg)
+        if exists:
             raise NotFoundError("Esta tara ya existe")
 
         if tara_data.peso_kg <= 0:
