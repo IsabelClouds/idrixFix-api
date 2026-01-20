@@ -13,11 +13,10 @@ class ControlTaraUseCase:
         self.audit_use_case = audit_use_case
 
     def create_tara(self, tara_data: TaraCreate, user_data: Dict[str, Any]) -> ControlTara:
-        tara_nombre = self.control_tara_repository.get_by_nombre(tara_data.nombre)
-        tara_peso = self.control_tara_repository.get_by_peso_kg(tara_data.peso_kg)
-
-        if tara_nombre is not None and tara_peso is not None and tara_nombre.id == tara_peso.id:
-            raise AlreadyExistsError("Esta tara ya existe")
+        exists_by_nombre = self.control_tara_repository.exists_by_nombre(tara_data.nombre)
+        exists_by_peso_kg = self.control_tara_repository.exists_by_peso_kg(tara_data.peso_kg)
+        if exists_by_nombre and exists_by_peso_kg:
+            raise NotFoundError("Esta tara ya existe")
 
         if tara_data.peso_kg <= 0:
             raise ValidationError("El peso de la tara debe ser mayor a cero")
@@ -40,10 +39,11 @@ class ControlTaraUseCase:
     def soft_delete(self, tara_id: int, user_data: Dict[str, Any]) -> bool:
         tara_data = self.control_tara_repository.get_by_id(tara_id)
 
-        if tara_data is None:
+        if (tara_data is None):
             raise NotFoundError("La tara no existe")
 
         self.control_tara_repository.set_principal(tara_id, False)
+
         datos_anteriores =  TaraResponse.model_validate(tara_data).model_dump(mode="json")
         self.audit_use_case.log_action(
             accion="DELETE",
