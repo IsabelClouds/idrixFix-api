@@ -4,7 +4,7 @@ from src.modules.auth_service.src.application.use_cases.audit_use_case import Au
 from src.modules.lineas_entrada_salida_service.src.application.ports.control_tara import IControlTaraRepository
 from src.modules.lineas_entrada_salida_service.src.infrastructure.api.schemas.control_tara import TaraCreate, TaraResponse
 from src.modules.lineas_entrada_salida_service.src.domain.entities import ControlTara
-from src.shared.exceptions import AlreadyExistsError, ValidationError
+from src.shared.exceptions import AlreadyExistsError, ValidationError, NotFoundError
 
 
 class ControlTaraUseCase:
@@ -13,12 +13,12 @@ class ControlTaraUseCase:
         self.audit_use_case = audit_use_case
 
     def create_tara(self, tara_data: TaraCreate, user_data: Dict[str, Any]) -> ControlTara:
-        exists_by_nombre = self.control_tara_repository.exists_by_nombre(tara_data.nombre)
-        if exists_by_nombre:
-            raise AlreadyExistsError("Ya existe una tara con este nombre")
-        exists_by_peso_kg = self.control_tara_repository.exists_by_peso_kg(tara_data.peso_kg)
-        if exists_by_peso_kg:
-            raise AlreadyExistsError("Ya existe una tara con este peso asignado")
+        tara_nombre = self.control_tara_repository.get_by_nombre(tara_data.nombre)
+        tara_peso = self.control_tara_repository.get_by_peso_kg(tara_data.peso_kg)
+
+        if tara_nombre is not None and tara_peso is not None and tara_nombre.id == tara_peso.id:
+            raise AlreadyExistsError("Esta tara ya existe")
+
         if tara_data.peso_kg <= 0:
             raise ValidationError("El peso de la tara debe ser mayor a cero")
         nueva_tara = self.control_tara_repository.create(tara_data)
@@ -39,6 +39,11 @@ class ControlTaraUseCase:
 
     def soft_delete(self, tara_id: int, user_data: Dict[str, Any]) -> bool:
         tara_data = self.control_tara_repository.get_by_id(tara_id)
+
+        if tara_data is None:
+            raise NotFoundError("La tara no existe")
+
+        self.control_tara_repository.set_principal(tara_id, False)
         datos_anteriores =  TaraResponse.model_validate(tara_data).model_dump(mode="json")
         self.audit_use_case.log_action(
             accion="DELETE",
@@ -53,7 +58,7 @@ class ControlTaraUseCase:
         tara = self.control_tara_repository.get_by_id(tara_id)
 
         if tara is None:
-            raise AlreadyExistsError("La tarano existe")
+            raise NotFoundError("La tara no existe")
 
         principal = self.control_tara_repository.get_principal()
 

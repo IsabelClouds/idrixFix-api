@@ -102,7 +102,7 @@ class ControlTaraRepository(IControlTaraRepository):
             self.db.rollback()
             raise RepositoryError("Error al eliminar la tara.") from e
 
-    def exists_by_peso_kg(self, peso_kg_tara: float) -> bool:
+    def get_by_peso_kg(self, peso_kg_tara: float) -> Optional[ControlTara]:
         try:
             tara_orm = (
                 self.db.query(ControlTaraOrm.id)
@@ -112,11 +112,18 @@ class ControlTaraRepository(IControlTaraRepository):
                 )
                 .first()
             )
-            return tara_orm is not None
+            return ControlTara(
+                id=tara_orm.id,
+                nombre=tara_orm.nombre,
+                descripcion=tara_orm.descripcion,
+                peso_kg=tara_orm.peso_kg,
+                is_active=tara_orm.is_active,
+                is_principal=tara_orm.is_principal
+            )
         except SQLAlchemyError as e:
             raise RepositoryError("Error al consultar existencia de la tara.") from e
 
-    def exists_by_nombre(self, nombre: str) -> bool:
+    def get_by_nombre(self, nombre: str) -> Optional[ControlTara]:
         try:
             tara_orm = (
                 self.db.query(ControlTaraOrm.id)
@@ -126,7 +133,14 @@ class ControlTaraRepository(IControlTaraRepository):
                 )
                 .first()
             )
-            return tara_orm is not None
+            return ControlTara(
+                id=tara_orm.id,
+                nombre=tara_orm.nombre,
+                descripcion=tara_orm.descripcion,
+                peso_kg=tara_orm.peso_kg,
+                is_active=tara_orm.is_active,
+                is_principal=tara_orm.is_principal
+            )
         except SQLAlchemyError as e:
             raise RepositoryError("Error al consultar existencia de la tara.") from e
 
