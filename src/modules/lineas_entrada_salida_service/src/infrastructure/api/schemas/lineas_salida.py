@@ -21,8 +21,10 @@ class LineasSalidaResponse(BaseModel):
         from_attributes = True
 
 class LineasSalidaUpdate(BaseModel):
-    codigo_bastidor: Optional[str]
-    p_lote: Optional[str]
+    codigo_bastidor: Optional[str] = None
+    p_lote: Optional[str] = None
+    codigo_obrero: Optional[str] = None
+    codigo_parrilla: Optional[str] = None
 
 class LineasSalidaPaginatedResponse(BaseModel):
     total_records: int
