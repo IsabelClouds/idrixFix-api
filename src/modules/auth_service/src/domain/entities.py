@@ -31,6 +31,8 @@ class ModuloEnum(Enum):
     DETALLE_PRODUCCION = "DETALLE_PRODUCCION"
     CONTROL_LOTE_SALIDAS = "CONTROL_LOTE_SALIDAS"
     CONTROL_MIGA = "CONTROL_MIGA"
+    REPORTES = "REPORTES"
+    CONTROL_MIGA_REPORTES = "CONTROL_MIGA_REPORTES"
 
 class PermisoEnum(Enum):
     """Enum para los tipos de permisos"""
