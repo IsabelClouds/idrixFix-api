@@ -40,6 +40,9 @@ class LineasSalidaRepository(ILineasSalidaRepository):
         if filters.lote:
             conditions.append(orm_model.p_lote == filters.lote)
 
+        if filters.codigo_obrero:
+            conditions.append(orm_model.codigo_obrero == filters.codigo_obrero)
+
         if conditions:
             query = query.filter(and_(*conditions))
 
