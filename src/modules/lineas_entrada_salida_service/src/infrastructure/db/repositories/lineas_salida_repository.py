@@ -163,6 +163,8 @@ class LineasSalidaRepository(ILineasSalidaRepository):
         for key, value in update_data.items():
             setattr(orm_model, key, value)
 
+
+
         try:
             self.db.commit()
             self.db.refresh(orm_model)
@@ -177,6 +179,7 @@ class LineasSalidaRepository(ILineasSalidaRepository):
                 codigo_obrero=orm_model.codigo_obrero,
                 guid=orm_model.guid
             )
+
         except SQLAlchemyError as e:
             self.db.rollback()
             raise RepositoryError("Error al actualizar la producción de la linea salida.") from e
