@@ -36,6 +36,15 @@ class LineasSalidaUseCase:
         }
         return mapping.get(numero, "desconocido")
 
+    def _empty_response(self, filters: LineasPagination) -> LineasSalidaMigaPaginatedResponse:
+        return {
+            "total_records": 0,
+            "total_pages": 0,
+            "page": filters.page,
+            "page_size": filters.page_size,
+            "data": []
+        }
+
     def _modelo_auditoria(self, linea_num: int) -> str:
         return f"reg_linea_{self._numero_en_letras(linea_num)}_salida"
 
@@ -71,35 +80,45 @@ class LineasSalidaUseCase:
             linea_num=linea_num
         )
 
-        total_pages = ceil(total_records / filters.page_size) if total_records > 0 else 0
+        if not lineas:
+            return self._empty_response(filters)
+
+        registro_ids = [linea.id for linea in lineas]
+
+        migas_list = self.control_miga_repository.get_by_registros_bulk(
+            linea_num=linea_num,
+            registros=registro_ids
+        )
+
+        migas_map = {miga.registro: miga for miga in migas_list}
 
         data_response: list[LineasSalidaMigaResponse] = []
 
         for linea in lineas:
-            miga = self.control_miga_repository.get_by_registro(
-                linea_num=linea_num,
-                registro=linea.id
-            )
+            miga = migas_map.get(linea.id)
 
-            data_response.append(
-                LineasSalidaMigaResponse(
-                    id=linea.id,
-                    fecha_p=linea.fecha_p,
-                    fecha=linea.fecha,
-                    peso_kg=linea.peso_kg,
-                    codigo_bastidor=linea.codigo_bastidor,
-                    p_lote=linea.p_lote,
-                    codigo_parrilla=linea.codigo_parrilla,
-                    codigo_obrero=linea.codigo_obrero,
-                    guid=linea.guid,
-                    p_miga=miga.p_miga if miga else 0.0,
-                    porcentaje=miga.porcentaje if miga else 0.0
+            if miga:
+                data_response.append(
+                    LineasSalidaMigaResponse(
+                        id=linea.id,
+                        fecha_p=linea.fecha_p,
+                        fecha=linea.fecha,
+                        peso_kg=linea.peso_kg,
+                        codigo_bastidor=linea.codigo_bastidor,
+                        p_lote=linea.p_lote,
+                        codigo_parrilla=linea.codigo_parrilla,
+                        codigo_obrero=linea.codigo_obrero,
+                        guid=linea.guid,
+                        p_miga=miga.p_miga,
+                        porcentaje=miga.porcentaje
+                    )
                 )
-            )
+
+        actual_count = len(data_response)
 
         return {
             "total_records": total_records,
-            "total_pages": total_pages,
+            "total_pages": ceil(total_records / filters.page_size),
             "page": filters.page,
             "page_size": filters.page_size,
             "data": data_response

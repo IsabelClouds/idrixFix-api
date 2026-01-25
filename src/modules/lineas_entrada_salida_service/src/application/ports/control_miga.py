@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List
 
 from src.modules.lineas_entrada_salida_service.src.domain.entities import ControlMiga
 
@@ -10,7 +10,7 @@ class IControlMigaRepository(ABC):
         pass
 
     @abstractmethod
-    def get_by_registro(self, linea_num: int, registro: int) -> Optional[ControlMiga]:
+    def get_by_registros_bulk(self, linea_num: int, registros: list[int]) -> List[ControlMiga]:
         pass
 
     @abstractmethod
