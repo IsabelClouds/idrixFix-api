@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional, List
 
 from src.modules.lineas_entrada_salida_service.src.application.ports.control_miga import IControlMigaRepository
@@ -21,7 +22,9 @@ class ControlMigaRepository(IControlMigaRepository):
             linea=miga_orm.linea,
             registro=miga_orm.registro,
             p_miga=miga_orm.p_miga,
-            porcentaje=miga_orm.porcentaje
+            porcentaje=miga_orm.porcentaje,
+            created_at=miga_orm.created_at,
+            updated_at=miga_orm.updated_at
         )
 
     def create(self, linea_num: int, registro: int, p_miga: float, porcentaje: float) -> ControlMiga:
@@ -31,20 +34,15 @@ class ControlMigaRepository(IControlMigaRepository):
                 linea=linea_num,
                 registro=registro,
                 p_miga=p_miga,
-                porcentaje=porcentaje
+                porcentaje=porcentaje,
+                created_at=datetime.datetime.now()
             )
 
             self.db.add(db_miga)
             self.db.commit()
             self.db.refresh(db_miga)
 
-            return ControlMiga(
-                id=db_miga.id,
-                linea=db_miga.linea,
-                registro=db_miga.registro,
-                p_miga=db_miga.p_miga,
-                porcentaje=db_miga.porcentaje
-            )
+            return self._to_domain(db_miga)
 
         except SQLAlchemyError as e:
             self.db.rollback()
@@ -73,17 +71,12 @@ class ControlMigaRepository(IControlMigaRepository):
 
         miga_orm.p_miga = p_miga
         miga_orm.porcentaje = porcentaje
+        miga_orm.updated_at = datetime.datetime.now()
 
         try:
             self.db.commit()
             self.db.refresh(miga_orm)
-            return ControlMiga(
-                id=miga_orm.id,
-                linea=miga_orm.linea,
-                registro=miga_orm.registro,
-                p_miga=miga_orm.p_miga,
-                porcentaje=miga_orm.porcentaje
-            )
+            return self._to_domain(miga_orm)
         except SQLAlchemyError as e:
             self.db.rollback()
             raise RepositoryError("Error al actualizar la miga.") from e
@@ -102,13 +95,7 @@ class ControlMigaRepository(IControlMigaRepository):
             if not miga_orm:
                 return None
 
-            return ControlMiga(
-                id=miga_orm.id,
-                linea=miga_orm.linea,
-                registro=miga_orm.registro,
-                p_miga=miga_orm.p_miga,
-                porcentaje=miga_orm.porcentaje
-            )
+            return self._to_domain(miga_orm)
 
         except SQLAlchemyError as e:
           raise RepositoryError("Error al consultar la miga.") from e

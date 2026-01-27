@@ -43,3 +43,5 @@ class ControlMiga:
     registro: int
     p_miga: float
     porcentaje: float
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]

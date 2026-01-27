@@ -185,3 +185,5 @@ class ControlMigaOrm(_BaseAuth):
     registro = Column(Integer, nullable=False)
     p_miga = Column(Float, nullable=False)
     porcentaje = Column(Float, nullable=False)
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
