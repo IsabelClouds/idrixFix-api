@@ -87,3 +87,28 @@ class ControlMigaRepository(IControlMigaRepository):
         except SQLAlchemyError as e:
             self.db.rollback()
             raise RepositoryError("Error al actualizar la miga.") from e
+
+    def get_by_registro(self, linea_num: int, registro: int) -> Optional[ControlMiga]:
+        try:
+            miga_orm = (
+                self.db.query(ControlMigaOrm)
+                .filter(
+                    ControlMigaOrm.linea == linea_num,
+                    ControlMigaOrm.registro == registro
+                )
+                .first()
+            )
+
+            if not miga_orm:
+                return None
+
+            return ControlMiga(
+                id=miga_orm.id,
+                linea=miga_orm.linea,
+                registro=miga_orm.registro,
+                p_miga=miga_orm.p_miga,
+                porcentaje=miga_orm.porcentaje
+            )
+
+        except SQLAlchemyError as e:
+          raise RepositoryError("Error al consultar la miga.") from e

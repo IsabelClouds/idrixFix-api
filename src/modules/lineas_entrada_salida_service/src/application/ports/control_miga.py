@@ -16,3 +16,7 @@ class IControlMigaRepository(ABC):
     @abstractmethod
     def update(self, id: int, p_miga: float, porcentaje: float) -> Optional[ControlMiga]:
         pass
+
+    @abstractmethod
+    def get_by_registro(self, linea_num: int, registro: int) -> Optional[ControlMiga]:
+        pass
