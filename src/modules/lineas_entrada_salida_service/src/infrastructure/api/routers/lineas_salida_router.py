@@ -313,3 +313,38 @@ def get_all_lineas_salida_with_miga(
         return error_response(
             message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+@router.post("/{linea_num}/miga/paginated-report", status_code=status.HTTP_200_OK)
+def get_all_lineas_salida_with_miga_report(
+        pagination_params: LineasPagination,
+        linea_num: int = Path(..., ge=1, le=6, description="Número de Línea (1 al 6)"),
+        use_case: LineasSalidaUseCase = Depends(get_lineas_salida_use_case)
+):
+    try:
+        pagination_result = use_case.get_lineas_salida_miga_paginated_by_filters_report(
+            filters=pagination_params,
+            linea_num=linea_num
+        )
+
+        response_data = [
+            LineasSalidaMigaResponse.model_validate(d).model_dump(mode="json")
+            for d in pagination_result["data"]
+        ]
+
+        response_data_with_meta = {
+            "total_records": pagination_result["total_records"],
+            "total_pages": pagination_result["total_pages"],
+            "page": pagination_result["page"],
+            "page_size": pagination_result["page_size"],
+            "data": response_data,
+        }
+
+        return success_response(
+            data=response_data_with_meta,
+            message=f"Producción de Linea Salida {linea_num} obten idas",
+        )
+
+    except RepositoryError as e:
+        return error_response(
+            message=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -67,7 +67,57 @@ class LineasSalidaUseCase:
             "data": data
         }
 
-    def get_lineas_salida_miga_paginated_by_filters(
+    def get_lineas_salida_miga_paginated_by_filters(self, filters: LineasPagination, linea_num: int) -> LineasSalidaMigaPaginatedResponse:
+        lineas, total_records = self.lineas_salida_repository.get_paginated_by_filters(
+            filters=filters,
+            page=filters.page,
+            page_size=filters.page_size,
+            linea_num=linea_num
+        )
+
+        if not lineas:
+            return self._empty_response(filters)
+
+        total_pages = ceil(total_records / filters.page_size) if total_records > 0 else 0
+
+        registro_ids = [linea.id for linea in lineas]
+        migas_list = self.control_miga_repository.get_by_registros_bulk(
+            linea_num=linea_num,
+            registros=registro_ids
+        )
+
+        migas_map = {miga.registro: miga for miga in migas_list}
+
+        data_response: list[LineasSalidaMigaResponse] = []
+
+        for linea in lineas:
+            miga = migas_map.get(linea.id)
+
+            data_response.append(
+                LineasSalidaMigaResponse(
+                    id=linea.id,
+                    fecha_p=linea.fecha_p,
+                    fecha=linea.fecha,
+                    peso_kg=linea.peso_kg,
+                    codigo_bastidor=linea.codigo_bastidor,
+                    p_lote=linea.p_lote,
+                    codigo_parrilla=linea.codigo_parrilla,
+                    codigo_obrero=linea.codigo_obrero,
+                    guid=linea.guid,
+                    p_miga=miga.p_miga if miga else 0.0,
+                    porcentaje=miga.porcentaje if miga else 0.0
+                )
+            )
+
+        return {
+            "total_records": total_records,
+            "total_pages": total_pages,
+            "page": filters.page,
+            "page_size": filters.page_size,
+            "data": data_response
+        }
+
+    def get_lineas_salida_miga_paginated_by_filters_report(
             self,
             filters: LineasPagination,
             linea_num: int
