@@ -167,7 +167,7 @@ class LineasSalidaUseCase:
         actual_count = len(data_response)
 
         return {
-            "total_records": total_records,
+            "total_records": actual_count,
             "total_pages": ceil(total_records / filters.page_size),
             "page": filters.page,
             "page_size": filters.page_size,
