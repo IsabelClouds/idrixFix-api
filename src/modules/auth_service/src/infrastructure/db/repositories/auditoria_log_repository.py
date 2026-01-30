@@ -86,7 +86,7 @@ class AuditoriaLogRepository(IAuditoriaLogRepository):
             query = self._apply_filters(query, filters)
             
             # Ordenar (ej. por fecha descendente)
-            query = query.order_by(AuditoriaLogORM.fecha.desc())
+            query = query.order_by(AuditoriaLogORM.log_id.desc())
             
             # Paginación
             offset = (page - 1) * page_size
