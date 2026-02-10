@@ -9,7 +9,7 @@ import logging
 from src.modules.lineas_entrada_salida_service.src.domain.entities import ControlMiga
 from src.modules.lineas_entrada_salida_service.src.infrastructure.db.models import ControlMigaOrm
 from src.shared.exceptions import RepositoryError, NotFoundError
-
+from src.shared.common.time_utils import get_ecuador_time
 
 class ControlMigaRepository(IControlMigaRepository):
     def __init__(self, db: Session):
@@ -35,7 +35,7 @@ class ControlMigaRepository(IControlMigaRepository):
                 registro=registro,
                 p_miga=p_miga,
                 porcentaje=porcentaje,
-                created_at=datetime.datetime.now()
+                created_at=get_ecuador_time()
             )
 
             self.db.add(db_miga)
@@ -71,7 +71,7 @@ class ControlMigaRepository(IControlMigaRepository):
 
         miga_orm.p_miga = p_miga
         miga_orm.porcentaje = porcentaje
-        miga_orm.updated_at = datetime.datetime.now()
+        miga_orm.updated_at = get_ecuador_time()
 
         try:
             self.db.commit()

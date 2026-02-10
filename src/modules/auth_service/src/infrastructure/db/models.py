@@ -20,7 +20,7 @@ from src.shared.database import _BaseAuth, _BaseMain
 from src.modules.auth_service.src.domain.entities import ModuloEnum, PermisoEnum
 import enum
 import datetime
-
+from src.shared.common.time_utils import get_ecuador_time
 
 class Usuario(_BaseAuth):
     __tablename__ = "usuarios"
@@ -164,7 +164,7 @@ class UsuarioLineaAsignada(_BaseAuth):
     # 2. ID de la línea de trabajo externa (¡NO es una FK de base de datos!)
     id_linea_externa = Column(Integer, nullable=False) 
     
-    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    created_at = Column(DateTime, nullable=False, default=get_ecuador_time)
     
     # Relación para que SQLAlchemy la entienda
     usuario = relationship("Usuario", back_populates="lineas_asignadas")
@@ -194,7 +194,7 @@ class AuditoriaLogORM(_BaseAuth):
     ejecutado_por_id = Column(BigInteger, ForeignKey("usuarios.id_usuario"), nullable=True)
     ejecutado_por_json = Column(JSON, nullable=True)
     
-    fecha = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    fecha = Column(DateTime, nullable=False, default=get_ecuador_time)
     
     usuario = relationship("Usuario")
 
