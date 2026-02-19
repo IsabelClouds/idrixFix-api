@@ -28,10 +28,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Exponer el puerto del servicio interno
-EXPOSE 8001
+EXPOSE 8021
 
 # Variable de entorno para que Python encuentre los módulos
 ENV PYTHONPATH=/app
 
 # Comando para ejecutar el management_service
-CMD ["uvicorn", "src.modules.management_service.main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "src.modules.management_service.main:app", "--host", "0.0.0.0", "--port", "8021"]

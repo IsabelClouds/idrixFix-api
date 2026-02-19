@@ -125,7 +125,7 @@ async def get_services():
     """Endpoint que muestra los servicios disponibles"""
     return {
         "services": [
-            {"name": "management_service", "port": 8001, "status": "available"},
+            {"name": "management_service", "port": 8021, "status": "available"},
         ],
         "mode": "monolithic_gateway",
         "description": "API Gateway que permite acceso unificado a todos los servicios",

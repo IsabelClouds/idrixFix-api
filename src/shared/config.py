@@ -48,16 +48,18 @@ class Settings(BaseSettings):
 
     # Servicios
     MANAGEMENT_SERVICE_HOST: str = "localhost"
-    MANAGEMENT_SERVICE_PORT: int = 8001
+    MANAGEMENT_SERVICE_PORT: int = 8021
     AUTH_SERVICE_HOST: str = "localhost"
-    AUTH_SERVICE_PORT: int = 8002
+    AUTH_SERVICE_PORT: int = 8022
     LINEAS_ENTRADA_SALIDA_SERVICE_HOST: str = "localhost"
-    LINEAS_ENTRADA_SALIDA_SERVICE_PORT: int = 8003
+    LINEAS_ENTRADA_SALIDA_SERVICE_PORT: int = 8023
+    ADMINISTRACION_SERVICE_HOST: str = "localhost"
+    ADMINISTRACION_SERVICE_PORT: int = 8024
 
 
     # Gateway
     GATEWAY_HOST: str = "localhost"
-    GATEWAY_PORT: int = 8000
+    GATEWAY_PORT: int = 8020
 
     # Entorno / logs
     ENVIRONMENT: str = "development"

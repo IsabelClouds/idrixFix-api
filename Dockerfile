@@ -30,4 +30,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 7. Comando para ejecutar la aplicación cuando el contenedor se inicie
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8020"]

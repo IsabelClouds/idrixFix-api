@@ -1,6 +1,29 @@
 version: '3.8'
 
 services:
+  # --- NUEVO SERVICIO: Base de datos Local en el VPS ---
+  sqlserver_local:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver_local
+    user: root
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${AUTH_DB_PASSWORD}
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - management_network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${AUTH_DB_PASSWORD} -C -Q \"SELECT 1\""]
+      interval: 10s
+      retries: 10
+      start_period: 10s
+      timeout: 5s
+
+
   management_service:
     build:
       context: .
@@ -9,6 +32,7 @@ services:
     ports:
       - "8021:8021"
     environment:
+      # DB Externa (sin cambios)
       DATABASE_URL: mssql+pyodbc://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?driver=${DB_DRIVER}&TrustServerCertificate=${DB_TRUST_CERTIFICATE}
       DB_HOST: ${DB_HOST}
       DB_PORT: 1433
@@ -37,6 +61,7 @@ services:
     ports:
       - "8022:8022"
     environment:
+      # DB Local (Ahora apunta al contenedor sqlserver_local)
       DATABASE_URL: mssql+pyodbc://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${AUTH_DB_NAME}?driver=${AUTH_DB_DRIVER}&TrustServerCertificate=${AUTH_DB_TRUST_CERTIFICATE}
       AUTH_SERVICE_HOST: 0.0.0.0
       AUTH_SERVICE_PORT: 8022
@@ -46,6 +71,9 @@ services:
       PYTHONPATH: /app
     networks:
       - management_network
+    depends_on:
+      sqlserver_local:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8022/health"]
       interval: 30s
@@ -72,26 +100,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
-  administracion_service:
-    build:
-      context: .
-      dockerfile: src/modules/administracion_service/Dockerfile
-    container_name: administracion_service
-    ports:
-      - "8024:8024"
-    environment:
-      DATABASE_URL: mssql+pyodbc://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@${AUTH_DB_HOST}:${AUTH_DB_PORT}/${AUTH_DB_NAME}?driver=${AUTH_DB_DRIVER}&TrustServerCertificate=${AUTH_DB_TRUST_CERTIFICATE}
-      SERVICE_HOST: 0.0.0.0
-      SERVICE_PORT: 8024
-      PYTHONPATH: /app
-    networks:
-      - management_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8024/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      start_period: 40s
 
   api_gateway:
     build:
@@ -103,6 +112,8 @@ services:
     environment:
       MANAGEMENT_SERVICE_URL: http://management_service:8021
       AUTH_SERVICE_URL: http://auth_service:8022
+      LINEAS_ENTRADA_SALIDA_SERVICE_URL: http://lineas_entrada_salida_service:8023
+      ADMINISTRACION_SERVICE_URL: http://administracion_service:8024
       GATEWAY_HOST: 0.0.0.0
       GATEWAY_PORT: 8020
       PYTHONPATH: /app
@@ -112,8 +123,6 @@ services:
       auth_service:
         condition: service_healthy
       lineas_entrada_salida_service:
-        condition: service_healthy
-      administracion_service:
         condition: service_healthy
     networks:
       - management_network
@@ -131,5 +140,5 @@ networks:
 volumes:
   sqlserver_data:
 
-#docker compose --env-file .env.production -f docker-compose.dev.yml up -d
-#docker compose --env-file .env.production -f docker-compose.dev.yml up -d --build
+#docker compose --env-file .env.production -f docker-compose.prod.yml up -d
+#docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build

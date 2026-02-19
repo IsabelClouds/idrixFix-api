@@ -28,10 +28,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Exponer el puerto del servicio
-EXPOSE 8002
+EXPOSE 8022
 
 # Variable de entorno para el servicio
 ENV PYTHONPATH=/app
 
 # Comando para ejecutar el servicio de autenticación
-CMD ["uvicorn", "src.modules.auth_service.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["uvicorn", "src.modules.auth_service.main:app", "--host", "0.0.0.0", "--port", "8022"]
