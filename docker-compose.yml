@@ -4,16 +4,16 @@ services:
   # --- NUEVO SERVICIO: Base de datos Local en el VPS ---
   sqlserver_local:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver_local
+    container_name: sqlserver_management_local # Nombre único para evitar conflictos
     user: root
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${AUTH_DB_PASSWORD}
       - MSSQL_PID=Express
     ports:
-      - "1433:1433"
+      - "1434:1433" # Puerto cambiado a 1434 en el host para no chocar con incentivos
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      - sqlserver_management_data:/var/opt/mssql # Volumen renombrado
     networks:
       - management_network
     healthcheck:
@@ -22,7 +22,6 @@ services:
       retries: 10
       start_period: 10s
       timeout: 5s
-
 
   management_service:
     build:
@@ -53,11 +52,11 @@ services:
       retries: 3
       start_period: 40s
 
-  auth_service:
+  management_auth_service: # Nombre del servicio modificado
     build:
       context: .
       dockerfile: src/modules/auth_service/Dockerfile
-    container_name: auth_service
+    container_name: management_auth_service # Nombre de contenedor único
     ports:
       - "8022:8022"
     environment:
@@ -102,16 +101,16 @@ services:
       retries: 3
       start_period: 40s
 
-  api_gateway:
+  management_api_gateway: # Nombre del servicio modificado
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: api_gateway
+    container_name: management_api_gateway # Nombre de contenedor único
     ports:
       - "8020:8020"
     environment:
       MANAGEMENT_SERVICE_URL: http://management_service:8021
-      AUTH_SERVICE_URL: http://auth_service:8022
+      AUTH_SERVICE_URL: http://management_auth_service:8022 # Referencia actualizada al nuevo servicio
       LINEAS_ENTRADA_SALIDA_SERVICE_URL: http://lineas_entrada_salida_service:8023
       ADMINISTRACION_SERVICE_URL: http://administracion_service:8024
       GATEWAY_HOST: 0.0.0.0
@@ -120,7 +119,7 @@ services:
     depends_on:
       management_service:
         condition: service_healthy
-      auth_service:
+      management_auth_service: # Dependencia actualizada al nuevo servicio
         condition: service_healthy
       lineas_entrada_salida_service:
         condition: service_healthy
@@ -138,7 +137,4 @@ networks:
     driver: bridge
 
 volumes:
-  sqlserver_data:
-
-#docker compose --env-file .env.production -f docker-compose.prod.yml up -d
-#docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+  sqlserver_management_data: # Volumen renombrado
