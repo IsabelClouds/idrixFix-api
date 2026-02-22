@@ -1,5 +1,4 @@
-from fastapi.params import Depends
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 from sqlalchemy.orm import Session
 
 from src.modules.administracion_service.src.application.use_case.planta_use_case import PlantaUseCase
