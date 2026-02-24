@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -30,3 +30,22 @@ class TipoLimpiezaRepository(ITipoLimpiezaRepository):
             )
         except SQLAlchemyError as e:
             raise RepositoryError("Error al consultar el tipo limpieza.") from e
+
+    def get_all(self) -> List[TipoLimpieza]:
+        try:
+            tipo_limpieza_orm = (
+                self.db.query(TipoLimpiezaORM)
+                .filter(TipoLimpiezaORM.estado == "ACTIVO")
+                .all()
+            )
+
+            return [
+                TipoLimpieza(
+                    id_tipo_limpieza=tp.id_tipo_limpieza,
+                    nombre=tp.nombre,
+                    estado=tp.estado
+                )
+                for tp in tipo_limpieza_orm
+            ]
+        except SQLAlchemyError as e:
+            raise RepositoryError("Error al obtener los tipos de limpieza") from e

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from modules.administracion_service.src.infrastructure.api.routers.tipo_limpieza_router import router as tipo_limpieza_router
 from src.modules.administracion_service.src.infrastructure.api.routers.detalle_produccion_router import router as detalle_produccion_router
 from src.modules.administracion_service.src.infrastructure.api.routers.planning_turno_router import router as planning_turno_router
 from src.modules.administracion_service.src.infrastructure.api.routers.planta_router import router as plantas_router
@@ -25,6 +26,7 @@ app.include_router(lineas_router, prefix="/api/administracion/lineas", tags=["Li
 app.include_router(plantas_router, prefix="/api/administracion/plantas", tags=["Plantas"])
 app.include_router(planning_turno_router, prefix="/api/administracion/planif-turno", tags=["Planificación Turno"])
 app.include_router(detalle_produccion_router, prefix="/api/administracion/detalle-prod", tags=["Detalle Producción"])
+app.include_router(tipo_limpieza_router, prefix="/api/administracion/tipo-limpieza", tags=["Tipo Limpieza"])
 
 @app.get("/health")
 async def health_check():
